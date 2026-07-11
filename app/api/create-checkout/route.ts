@@ -4,7 +4,7 @@ import Stripe from 'stripe';
 export async function POST() {
   try {
     const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-      apiVersion: '2024-11-20.acacia',
+      apiVersion: '2025-06-24.dahlia',
     });
 
     const session = await stripe.checkout.sessions.create({
@@ -16,8 +16,8 @@ export async function POST() {
         },
       ],
       mode: 'subscription',
-      success_url: 'http://localhost:3001/success',
-      cancel_url: 'http://localhost:3001/cancel',
+      success_url: `${process.env.NEXT_PUBLIC_APP_URL}/success`,
+      cancel_url: `${process.env.NEXT_PUBLIC_APP_URL}/cancel`,
     });
 
     return NextResponse.json({ url: session.url });
