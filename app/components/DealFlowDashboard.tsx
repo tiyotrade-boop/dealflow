@@ -55,6 +55,8 @@ export default function DealFlowDashboard() {
   const [dealsLoading, setDealsLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showDealModal, setShowDealModal] = useState(false);
+  const [dealName, setDealName] = useState('');
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
@@ -126,11 +128,14 @@ export default function DealFlowDashboard() {
     }
   };
 
-  const handleSaveDeal = async () => {
+  const handleSaveDeal = () => {
     if (!user) return;
+    setShowDealModal(true);
+    setDealName('');
+  };
 
-    const dealName = window.prompt('Enter a name for this deal:');
-    if (!dealName || !dealName.trim()) return;
+  const handleConfirmSave = async () => {
+    if (!dealName.trim()) return;
 
     setSaving(true);
     setError(null);
@@ -146,6 +151,8 @@ export default function DealFlowDashboard() {
         roi: calcValues.roi,
         createdAt: serverTimestamp(),
       });
+      setShowDealModal(false);
+      setDealName('');
     } catch (err) {
       console.error('Failed to save deal:', err);
       setError('Could not save this deal. Please try again.');
@@ -163,6 +170,26 @@ export default function DealFlowDashboard() {
     } catch (err) {
       console.error('Failed to delete deal:', err);
       setError('Could not delete this deal. Please try again.');
+    }
+  };
+
+  const handleSubscribe = async () => {
+    try {
+      const response = await fetch('/api/create-checkout', {
+        method: 'POST',
+      });
+      const data = await response.json();
+      
+      if (data.error) {
+        alert(data.error);
+        return;
+      }
+      
+      // Redirect to Stripe checkout
+      window.location.href = data.url;
+    } catch (error) {
+      console.error('Error:', error);
+      alert('Something went wrong. Please try again.');
     }
   };
 
@@ -235,13 +262,20 @@ export default function DealFlowDashboard() {
         <DealFlowCalculator onValuesChange={setCalcValues} />
       </div>
 
-      <div className="flex justify-end">
+      <div className="flex justify-end gap-4">
         <button
           onClick={handleSaveDeal}
           disabled={!user || saving}
           className="rounded-lg bg-green-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-green-700 disabled:cursor-not-allowed disabled:bg-gray-300"
         >
           {saving ? 'Saving…' : 'Save Deal'}
+        </button>
+
+        <button
+          onClick={handleSubscribe}
+          className="rounded-lg bg-purple-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-purple-700"
+        >
+          💳 Subscribe ($49/mo)
         </button>
       </div>
       {!user && (
@@ -317,6 +351,39 @@ export default function DealFlowDashboard() {
           </div>
         )}
       </div>
+
+      {/* Save Deal Modal */}
+      {showDealModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-xl p-6 max-w-md w-full mx-4">
+            <h2 className="text-xl font-semibold mb-4">Save Deal</h2>
+            <p className="text-gray-600 mb-4">Enter a name for this deal:</p>
+            <input
+              type="text"
+              value={dealName}
+              onChange={(e) => setDealName(e.target.value)}
+              placeholder="e.g., House #1"
+              className="w-full border border-gray-300 rounded-lg px-4 py-2 mb-4"
+              autoFocus
+            />
+            <div className="flex gap-3 justify-end">
+              <button
+                onClick={() => setShowDealModal(false)}
+                className="px-4 py-2 text-gray-600 hover:text-gray-800"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleConfirmSave}
+                disabled={saving}
+                className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 disabled:bg-gray-300"
+              >
+                {saving ? 'Saving...' : 'Save Deal'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
