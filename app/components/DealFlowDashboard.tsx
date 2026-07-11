@@ -141,7 +141,7 @@ export default function DealFlowDashboard() {
     setError(null);
     try {
       await addDoc(collection(db, 'deals'), {
-        userId: user.uid,
+        userId: user!.uid,
         dealName: dealName.trim(),
         purchasePrice: calcValues.purchasePrice,
         renovationBudget: calcValues.renovationBudget,
@@ -185,7 +185,6 @@ export default function DealFlowDashboard() {
         return;
       }
       
-      // Redirect to Stripe checkout
       window.location.href = data.url;
     } catch (error) {
       console.error('Error:', error);
