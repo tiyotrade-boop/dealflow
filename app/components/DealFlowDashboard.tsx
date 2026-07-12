@@ -6,6 +6,8 @@ import {
   onAuthStateChanged,
   signOut,
   type User,
+  signInWithRedirect,
+  getRedirectResult,
 } from 'firebase/auth';
 import {
   addDoc,
@@ -18,7 +20,7 @@ import {
   serverTimestamp,
   where,
 } from 'firebase/firestore';
-import { auth, db, signInWithRedirect, getRedirectResult } from '../lib/firebase';
+import { auth, db } from '../lib/firebase';
 import DealFlowCalculator from './DealFlowCalculator';
 
 interface CalculatorValues {
@@ -66,17 +68,18 @@ export default function DealFlowDashboard() {
   }, []);
 
   useEffect(() => {
-    const checkRedirect = async () => {
+    const handleRedirectResult = async () => {
       try {
         const result = await getRedirectResult(auth);
         if (result) {
           setUser(result.user);
         }
-      } catch (err) {
-        console.error('Redirect sign-in error:', err);
+      } catch (error) {
+        console.error('Redirect sign-in error:', error);
+        setError('Sign-in failed. Please try again.');
       }
     };
-    checkRedirect();
+    handleRedirectResult();
   }, []);
 
   useEffect(() => {
