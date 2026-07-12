@@ -4,7 +4,6 @@ import { useEffect, useState } from 'react';
 import {
   GoogleAuthProvider,
   onAuthStateChanged,
-  signInWithPopup,
   signOut,
   type User,
 } from 'firebase/auth';
@@ -19,7 +18,7 @@ import {
   serverTimestamp,
   where,
 } from 'firebase/firestore';
-import { auth, db } from '../lib/firebase';
+import { auth, db, signInWithRedirect, getRedirectResult } from '../lib/firebase';
 import DealFlowCalculator from './DealFlowCalculator';
 
 interface CalculatorValues {
@@ -64,6 +63,20 @@ export default function DealFlowDashboard() {
       setAuthLoading(false);
     });
     return () => unsubscribe();
+  }, []);
+
+  useEffect(() => {
+    const checkRedirect = async () => {
+      try {
+        const result = await getRedirectResult(auth);
+        if (result) {
+          setUser(result.user);
+        }
+      } catch (err) {
+        console.error('Redirect sign-in error:', err);
+      }
+    };
+    checkRedirect();
   }, []);
 
   useEffect(() => {
@@ -113,7 +126,7 @@ export default function DealFlowDashboard() {
   const handleSignIn = async () => {
     setError(null);
     try {
-      await signInWithPopup(auth, new GoogleAuthProvider());
+      await signInWithRedirect(auth, new GoogleAuthProvider());
     } catch (err) {
       console.error('Sign-in failed:', err);
       setError('Sign-in failed. Please try again.');
