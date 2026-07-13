@@ -16,8 +16,8 @@ export async function POST() {
         },
       ],
       mode: 'subscription',
-      success_url: `${process.env.NEXT_PUBLIC_APP_URL}/success`,
-      cancel_url: `${process.env.NEXT_PUBLIC_APP_URL}/cancel`,
+      success_url: 'https://dealflowapp.app/success',
+      cancel_url: 'https://dealflowapp.app/cancel',
     });
 
     return NextResponse.json({ url: session.url });

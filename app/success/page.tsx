@@ -9,7 +9,7 @@ export default function SuccessPage() {
         <div className="text-6xl mb-4">🎉</div>
         <h1 className="text-2xl font-bold text-gray-800 mb-2">Payment Successful!</h1>
         <p className="text-gray-600 mb-6">
-          Thank you for subscribing to DealFlow Pro. You now have full access to all features.
+          Thank you for subscribing to DealFlow Pro!
         </p>
         <Link
           href="/"

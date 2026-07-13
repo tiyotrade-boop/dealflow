@@ -132,7 +132,10 @@ export default function DealFlowDashboard() {
   };
 
   const handleSaveDeal = () => {
-    if (!user) return;
+    if (!user) {
+      setError('Please sign in to save deals.');
+      return;
+    }
     setShowDealModal(true);
     setDealName('');
   };
@@ -143,7 +146,7 @@ export default function DealFlowDashboard() {
     setSaving(true);
     setError(null);
     try {
-      await addDoc(collection(db, 'deals'), {
+      const docRef = await addDoc(collection(db, 'deals'), {
         userId: user!.uid,
         dealName: dealName.trim(),
         purchasePrice: calcValues.purchasePrice,
@@ -154,6 +157,7 @@ export default function DealFlowDashboard() {
         roi: calcValues.roi,
         createdAt: serverTimestamp(),
       });
+      console.log('Deal saved with ID:', docRef.id);
       setShowDealModal(false);
       setDealName('');
     } catch (err) {
