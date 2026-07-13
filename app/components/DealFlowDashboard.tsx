@@ -4,10 +4,9 @@ import { useEffect, useState } from 'react';
 import {
   GoogleAuthProvider,
   onAuthStateChanged,
+  signInWithPopup,
   signOut,
   type User,
-  signInWithRedirect,
-  getRedirectResult,
 } from 'firebase/auth';
 import {
   addDoc,
@@ -61,25 +60,11 @@ export default function DealFlowDashboard() {
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
+      console.log('Auth state changed:', firebaseUser);
       setUser(firebaseUser);
       setAuthLoading(false);
     });
     return () => unsubscribe();
-  }, []);
-
-  useEffect(() => {
-    const handleRedirectResult = async () => {
-      try {
-        const result = await getRedirectResult(auth);
-        if (result) {
-          setUser(result.user);
-        }
-      } catch (error) {
-        console.error('Redirect sign-in error:', error);
-        setError('Sign-in failed. Please try again.');
-      }
-    };
-    handleRedirectResult();
   }, []);
 
   useEffect(() => {
@@ -129,7 +114,9 @@ export default function DealFlowDashboard() {
   const handleSignIn = async () => {
     setError(null);
     try {
-      await signInWithRedirect(auth, new GoogleAuthProvider());
+      const result = await signInWithPopup(auth, new GoogleAuthProvider());
+      console.log('Sign-in successful:', result.user);
+      setUser(result.user);
     } catch (err) {
       console.error('Sign-in failed:', err);
       setError('Sign-in failed. Please try again.');
