@@ -2,12 +2,11 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import Link from "next/link";
-import Image from "next/image";
 
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "DealFlow - Real Estate Profit Calculator",
+  title: "DealFlow - Flip Calculator for Real Estate Agents",
   description: "Calculate your flip profits and save deals in 5 seconds",
 };
 
