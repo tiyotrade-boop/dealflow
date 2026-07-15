@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { addDoc, collection, getDocs, query, orderBy, limit, where } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
+import { db } from '../../lib/firebase';
 
 // GET: Fetch approved testimonials
 export async function GET() {
@@ -32,7 +32,6 @@ export async function POST(request: Request) {
     const body = await request.json();
     const { name, role, review, rating } = body;
 
-    // Validate required fields
     if (!name || !review) {
       return NextResponse.json(
         { error: 'Name and review are required' },
@@ -40,13 +39,12 @@ export async function POST(request: Request) {
       );
     }
 
-    // Save to Firebase
     const docRef = await addDoc(collection(db, 'testimonials'), {
       name: name.trim(),
       role: role?.trim() || 'Real Estate Professional',
       review: review.trim(),
       rating: rating || 5,
-      approved: false, // Requires admin approval
+      approved: false,
       createdAt: new Date().toISOString(),
     });
 
