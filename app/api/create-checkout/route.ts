@@ -1,8 +1,10 @@
 import { NextResponse } from 'next/server';
 import Stripe from 'stripe';
 
-export async function POST() {
+export async function POST(request: Request) {
   try {
+    const { userId, userEmail } = await request.json();
+    
     const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
       apiVersion: '2026-06-24.dahlia',
     });
@@ -18,6 +20,8 @@ export async function POST() {
       mode: 'subscription',
       success_url: 'https://dealflowapp.app/success',
       cancel_url: 'https://dealflowapp.app/cancel',
+      client_reference_id: userId,
+      customer_email: userEmail,
     });
 
     return NextResponse.json({ url: session.url });
