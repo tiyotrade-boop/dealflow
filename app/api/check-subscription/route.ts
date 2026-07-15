@@ -8,7 +8,6 @@ export async function POST(request: Request) {
     console.log('🔍 Checking subscription for customer:', customerId);
 
     if (!customerId) {
-      console.log('❌ No customer ID provided');
       return NextResponse.json({ subscribed: false });
     }
 
@@ -16,23 +15,19 @@ export async function POST(request: Request) {
       apiVersion: '2026-06-24.dahlia',
     });
 
-    console.log('📡 Fetching subscriptions from Stripe...');
     const subscriptions = await stripe.subscriptions.list({
       customer: customerId,
       status: 'active',
       limit: 1,
     });
 
-    const isSubscribed = subscriptions.data.length > 0;
-    console.log(`✅ Subscription status: ${isSubscribed ? 'ACTIVE' : 'INACTIVE'}`);
-
     return NextResponse.json({
-      subscribed: isSubscribed,
+      subscribed: subscriptions.data.length > 0,
     });
   } catch (error: any) {
     console.error('❌ Error checking subscription:', error.message);
     return NextResponse.json(
-      { error: 'Failed to check subscription' },
+      { subscribed: false, error: error.message },
       { status: 500 }
     );
   }

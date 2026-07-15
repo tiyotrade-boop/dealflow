@@ -2,9 +2,13 @@ import { NextResponse } from 'next/server';
 import { addDoc, collection, getDocs, query, orderBy, limit, where } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
 
-// GET: Fetch approved testimonials
 export async function GET() {
   try {
+    if (!db) {
+      console.error('Firestore db is not initialized');
+      return NextResponse.json([]);
+    }
+
     const q = query(
       collection(db, 'testimonials'),
       where('approved', '==', true),
@@ -19,14 +23,10 @@ export async function GET() {
     return NextResponse.json(testimonials);
   } catch (error) {
     console.error('Error fetching testimonials:', error);
-    return NextResponse.json(
-      { error: 'Failed to fetch testimonials' },
-      { status: 500 }
-    );
+    return NextResponse.json([]);
   }
 }
 
-// POST: Submit a new testimonial
 export async function POST(request: Request) {
   try {
     const body = await request.json();

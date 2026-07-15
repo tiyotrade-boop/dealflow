@@ -5,7 +5,14 @@ export async function POST(request: Request) {
   try {
     const { userId, userEmail } = await request.json();
     
-    const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
+    if (!process.env.STRIPE_SECRET_KEY) {
+      return NextResponse.json(
+        { error: 'Stripe secret key is not configured' },
+        { status: 500 }
+      );
+    }
+
+    const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
       apiVersion: '2026-06-24.dahlia',
     });
 
@@ -28,7 +35,7 @@ export async function POST(request: Request) {
   } catch (error: any) {
     console.error('Stripe error:', error.message);
     return NextResponse.json(
-      { error: 'Failed to create checkout session' },
+      { error: error.message || 'Failed to create checkout session' },
       { status: 500 }
     );
   }
