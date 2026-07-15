@@ -4,8 +4,10 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { onAuthStateChanged } from 'firebase/auth';
 import { auth } from '../lib/firebase';
-import DealFlowDashboard from '../components/DealFlowDashboard';
 import Link from 'next/link';
+
+// Lazy load the dashboard to avoid import issues
+const DealFlowDashboard = React.lazy(() => import('../components/DealFlowDashboard'));
 
 export default function DashboardPage() {
   const [loading, setLoading] = useState(true);
@@ -74,5 +76,9 @@ export default function DashboardPage() {
     );
   }
 
-  return <DealFlowDashboard />;
+  return (
+    <React.Suspense fallback={<div className="min-h-screen flex items-center justify-center"><p className="text-gray-500">Loading dashboard...</p></div>}>
+      <DealFlowDashboard />
+    </React.Suspense>
+  );
 }
