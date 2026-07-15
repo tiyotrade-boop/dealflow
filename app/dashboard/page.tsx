@@ -1,12 +1,10 @@
-'use client';
-
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { onAuthStateChanged } from 'firebase/auth';
 import { auth } from '../lib/firebase';
 import Link from 'next/link';
 
-// Lazy load the dashboard to avoid import issues
+// Lazy load the dashboard
 const DealFlowDashboard = React.lazy(() => import('../components/DealFlowDashboard'));
 
 export default function DashboardPage() {
