@@ -24,10 +24,22 @@ export default function Home() {
     const fetchTestimonials = async () => {
       try {
         const res = await fetch('/api/testimonials');
+        if (!res.ok) {
+          console.error('Failed to fetch testimonials:', res.status);
+          setTestimonials([]);
+          return;
+        }
         const data = await res.json();
-        setTestimonials(data);
+        // Make sure data is an array
+        if (Array.isArray(data)) {
+          setTestimonials(data);
+        } else {
+          console.error('Testimonials data is not an array:', data);
+          setTestimonials([]);
+        }
       } catch (error) {
         console.error('Failed to load testimonials:', error);
+        setTestimonials([]);
       } finally {
         setLoading(false);
       }
