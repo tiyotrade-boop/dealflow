@@ -19,22 +19,18 @@ export default function Home() {
     type: null,
   });
 
-  // Fetch testimonials on load
   useEffect(() => {
     const fetchTestimonials = async () => {
       try {
         const res = await fetch('/api/testimonials');
         if (!res.ok) {
-          console.error('Failed to fetch testimonials:', res.status);
           setTestimonials([]);
           return;
         }
         const data = await res.json();
-        // Make sure data is an array
         if (Array.isArray(data)) {
           setTestimonials(data);
         } else {
-          console.error('Testimonials data is not an array:', data);
           setTestimonials([]);
         }
       } catch (error) {
@@ -47,7 +43,6 @@ export default function Home() {
     fetchTestimonials();
   }, []);
 
-  // Handle form submission
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const form = e.currentTarget;
@@ -82,15 +77,14 @@ export default function Home() {
     }
   };
 
-  // Star rating display
   const renderStars = (rating: number) => {
     return '⭐'.repeat(rating) + '☆'.repeat(5 - rating);
   };
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Hero Section */}
       <section className="max-w-5xl mx-auto px-4 py-12 text-center">
+        {/* Hero */}
         <div className="bg-gradient-to-r from-blue-600 to-blue-800 text-white rounded-2xl p-12 mb-8 shadow-xl">
           <h1 className="text-4xl md:text-5xl font-bold mb-4">
             ⚡ 5 Seconds to Know <br />If a Deal Is Worth It
@@ -117,9 +111,7 @@ export default function Home() {
 
         {/* Comparison Table */}
         <div className="bg-white rounded-xl shadow-lg p-8 mb-8">
-          <h2 className="text-2xl font-bold text-gray-800 mb-6">
-            Why Agents Choose DealFlow
-          </h2>
+          <h2 className="text-2xl font-bold text-gray-800 mb-6">Why Agents Choose DealFlow</h2>
           <div className="overflow-x-auto">
             <table className="w-full text-left">
               <thead>
@@ -163,12 +155,9 @@ export default function Home() {
           </div>
         </div>
 
-        {/* Testimonials Display */}
+        {/* Testimonials */}
         <div className="bg-white rounded-xl shadow-lg p-8 mb-8">
-          <h2 className="text-2xl font-bold text-gray-800 mb-6">
-            🏠 What Agents Are Saying
-          </h2>
-
+          <h2 className="text-2xl font-bold text-gray-800 mb-6">🏠 What Agents Are Saying</h2>
           {loading ? (
             <p className="text-gray-500">Loading reviews...</p>
           ) : testimonials.length === 0 ? (
@@ -188,68 +177,31 @@ export default function Home() {
           <p className="text-gray-500 text-sm mt-4">⭐ Join 500+ agents already using DealFlow</p>
         </div>
 
-        {/* Submit Testimonial Form */}
+        {/* Testimonial Form */}
         <div className="bg-white rounded-xl shadow-lg p-8 mb-8">
-          <h2 className="text-2xl font-bold text-gray-800 mb-4">
-            ✍️ Share Your Experience
-          </h2>
-          <p className="text-gray-600 mb-6">
-            Used DealFlow? Let others know what you think!
-          </p>
-
+          <h2 className="text-2xl font-bold text-gray-800 mb-4">✍️ Share Your Experience</h2>
+          <p className="text-gray-600 mb-6">Used DealFlow? Let others know what you think!</p>
           {formStatus.message && (
-            <div
-              className={`mb-4 p-3 rounded-lg ${
-                formStatus.type === 'success' ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'
-              }`}
-            >
+            <div className={`mb-4 p-3 rounded-lg ${formStatus.type === 'success' ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'}`}>
               {formStatus.message}
             </div>
           )}
-
           <form onSubmit={handleSubmit} className="max-w-lg mx-auto">
             <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Your Name <span className="text-red-500">*</span>
-              </label>
-              <input
-                type="text"
-                name="name"
-                placeholder="e.g., Sarah M."
-                className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500"
-                required
-              />
+              <label className="block text-sm font-medium text-gray-700 mb-1">Your Name <span className="text-red-500">*</span></label>
+              <input type="text" name="name" placeholder="e.g., Sarah M." className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500" required />
             </div>
-
             <div className="mb-4">
               <label className="block text-sm font-medium text-gray-700 mb-1">Your Role</label>
-              <input
-                type="text"
-                name="role"
-                placeholder="e.g., Realtor, Investor"
-                className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500"
-              />
+              <input type="text" name="role" placeholder="e.g., Realtor, Investor" className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500" />
             </div>
-
             <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Your Review <span className="text-red-500">*</span>
-              </label>
-              <textarea
-                name="review"
-                rows={3}
-                placeholder="How did DealFlow help you?"
-                className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500"
-                required
-              ></textarea>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Your Review <span className="text-red-500">*</span></label>
+              <textarea name="review" rows={3} placeholder="How did DealFlow help you?" className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500" required></textarea>
             </div>
-
             <div className="mb-4">
               <label className="block text-sm font-medium text-gray-700 mb-1">Rating</label>
-              <select
-                name="rating"
-                className="w-full border border-gray-300 rounded-lg px-4 py-2"
-              >
+              <select name="rating" className="w-full border border-gray-300 rounded-lg px-4 py-2">
                 <option value="5">⭐⭐⭐⭐⭐ (5)</option>
                 <option value="4">⭐⭐⭐⭐☆ (4)</option>
                 <option value="3">⭐⭐⭐☆☆ (3)</option>
@@ -257,29 +209,15 @@ export default function Home() {
                 <option value="1">⭐☆☆☆☆ (1)</option>
               </select>
             </div>
-
-            <button
-              type="submit"
-              className="w-full bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition font-semibold"
-            >
-              Submit Review
-            </button>
+            <button type="submit" className="w-full bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition font-semibold">Submit Review</button>
           </form>
-
-          <p className="text-gray-400 text-sm mt-4 text-center">
-            ⚡ Reviews are moderated. Your email will not be published.
-          </p>
+          <p className="text-gray-400 text-sm mt-4 text-center">⚡ Reviews are moderated. Your email will not be published.</p>
         </div>
 
-        {/* CTA Section */}
+        {/* CTA */}
         <div className="bg-blue-600 text-white rounded-xl p-8">
-          <h2 className="text-2xl font-bold mb-4">
-            Ready to Save Time & Close More Deals?
-          </h2>
-          <Link
-            href="/dashboard"
-            className="bg-white text-blue-700 font-semibold px-8 py-3 rounded-lg hover:bg-blue-50 transition text-lg inline-block"
-          >
+          <h2 className="text-2xl font-bold mb-4">Ready to Save Time & Close More Deals?</h2>
+          <Link href="/dashboard" className="bg-white text-blue-700 font-semibold px-8 py-3 rounded-lg hover:bg-blue-50 transition text-lg inline-block">
             🚀 Start Your Free 7-Day Trial
           </Link>
           <p className="text-blue-200 text-sm mt-4">No credit card required. Cancel anytime.</p>
