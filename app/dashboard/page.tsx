@@ -11,11 +11,13 @@ export default function DashboardPage() {
   const router = useRouter();
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+    const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
       if (!firebaseUser) {
+        // Not signed in - redirect to home page
         router.push('/');
         return;
       }
+      // Signed in - show dashboard
       setLoading(false);
     });
 
@@ -30,5 +32,6 @@ export default function DashboardPage() {
     );
   }
 
+  // Show the dashboard
   return <DealFlowDashboard />;
 }
