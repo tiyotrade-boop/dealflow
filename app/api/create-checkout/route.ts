@@ -16,16 +16,27 @@ export async function POST(request: Request) {
       apiVersion: '2026-06-24.dahlia',
     });
 
-    // Check if customer exists with this email
-    const customers = await stripe.customers.list({
-      email: userEmail,
-      limit: 1,
-    });
-
+    // Find or create customer
     let customerId;
-    if (customers.data.length > 0) {
-      customerId = customers.data[0].id;
-    } else {
+    try {
+      const customers = await stripe.customers.list({
+        email: userEmail,
+        limit: 1,
+      });
+
+      if (customers.data.length > 0) {
+        customerId = customers.data[0].id;
+      } else {
+        const customer = await stripe.customers.create({
+          email: userEmail,
+          metadata: {
+            firebaseUid: userId,
+          },
+        });
+        customerId = customer.id;
+      }
+    } catch (error) {
+      console.error('Error finding/creating customer:', error);
       const customer = await stripe.customers.create({
         email: userEmail,
         metadata: {
@@ -48,7 +59,6 @@ export async function POST(request: Request) {
       success_url: 'https://dealflowapp.app/success',
       cancel_url: 'https://dealflowapp.app/cancel',
       client_reference_id: userId,
-      customer_email: userEmail,
     });
 
     return NextResponse.json({ url: session.url });
