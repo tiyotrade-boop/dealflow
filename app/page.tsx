@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 
 interface Testimonial {
   id: string;
@@ -14,10 +15,6 @@ interface Testimonial {
 export default function Home() {
   const [testimonials, setTestimonials] = useState<Testimonial[]>([]);
   const [loading, setLoading] = useState(true);
-  const [formStatus, setFormStatus] = useState<{ message: string; type: 'success' | 'error' | null }>({
-    message: '',
-    type: null,
-  });
 
   useEffect(() => {
     const fetchTestimonials = async () => {
@@ -42,40 +39,6 @@ export default function Home() {
     };
     fetchTestimonials();
   }, []);
-
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    const form = e.currentTarget;
-    const formData = new FormData(form);
-
-    const name = formData.get('name') as string;
-    const role = formData.get('role') as string;
-    const review = formData.get('review') as string;
-    const rating = parseInt(formData.get('rating') as string) || 5;
-
-    if (!name || !review) {
-      setFormStatus({ message: 'Please fill in all required fields.', type: 'error' });
-      return;
-    }
-
-    try {
-      const res = await fetch('/api/testimonials', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, role, review, rating }),
-      });
-
-      if (res.ok) {
-        setFormStatus({ message: '✅ Thank you! Your review has been submitted for approval.', type: 'success' });
-        form.reset();
-      } else {
-        const error = await res.json();
-        setFormStatus({ message: error.error || 'Something went wrong. Please try again.', type: 'error' });
-      }
-    } catch (error) {
-      setFormStatus({ message: 'Network error. Please try again.', type: 'error' });
-    }
-  };
 
   const renderStars = (rating: number) => {
     return '⭐'.repeat(rating) + '☆'.repeat(5 - rating);
@@ -107,6 +70,62 @@ export default function Home() {
             </Link>
           </div>
           <p className="text-blue-200 text-sm mt-4">✅ No credit card required</p>
+        </div>
+
+        {/* Calculator Preview */}
+        <div className="bg-white rounded-xl shadow-lg p-8 mb-8">
+          <h2 className="text-2xl font-bold text-gray-800 mb-4">
+            🖥️ See What You Get
+          </h2>
+          <p className="text-gray-600 mb-6">
+            Professional flip calculator with instant profit & ROI analysis
+          </p>
+          <div className="rounded-xl overflow-hidden shadow-md border border-gray-200 bg-gray-100 p-4">
+            <div className="bg-white rounded-lg p-4">
+              <div className="grid grid-cols-2 gap-4 text-left">
+                <div>
+                  <p className="text-xs text-gray-500">Purchase Price</p>
+                  <p className="font-semibold">$200,000</p>
+                </div>
+                <div>
+                  <p className="text-xs text-gray-500">Renovation Budget</p>
+                  <p className="font-semibold">$50,000</p>
+                </div>
+                <div>
+                  <p className="text-xs text-gray-500">Holding Costs</p>
+                  <p className="font-semibold">$2,000</p>
+                </div>
+                <div>
+                  <p className="text-xs text-gray-500">After Repair Value</p>
+                  <p className="font-semibold">$300,000</p>
+                </div>
+              </div>
+              <div className="grid grid-cols-3 gap-4 mt-4 pt-4 border-t">
+                <div>
+                  <p className="text-xs text-gray-500">Total Cost</p>
+                  <p className="font-bold text-gray-800">$252,000</p>
+                </div>
+                <div>
+                  <p className="text-xs text-gray-500">Profit</p>
+                  <p className="font-bold text-green-600">$48,000</p>
+                </div>
+                <div>
+                  <p className="text-xs text-gray-500">ROI</p>
+                  <p className="font-bold text-yellow-600">19.0%</p>
+                </div>
+              </div>
+            </div>
+          </div>
+          <p className="text-gray-400 text-sm mt-3">🔒 Full access with subscription</p>
+          <div className="text-center mt-6">
+            <Link
+              href="/dashboard"
+              className="bg-blue-600 text-white font-semibold px-8 py-3 rounded-lg hover:bg-blue-700 transition text-lg"
+            >
+              Try It Free →
+            </Link>
+            <p className="text-gray-400 text-sm mt-2">7-day free trial. No credit card required.</p>
+          </div>
         </div>
 
         {/* Comparison Table */}
@@ -177,47 +196,13 @@ export default function Home() {
           <p className="text-gray-500 text-sm mt-4">⭐ Join 500+ agents already using DealFlow</p>
         </div>
 
-        {/* Testimonial Form */}
-        <div className="bg-white rounded-xl shadow-lg p-8 mb-8">
-          <h2 className="text-2xl font-bold text-gray-800 mb-4">✍️ Share Your Experience</h2>
-          <p className="text-gray-600 mb-6">Used DealFlow? Let others know what you think!</p>
-          {formStatus.message && (
-            <div className={`mb-4 p-3 rounded-lg ${formStatus.type === 'success' ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'}`}>
-              {formStatus.message}
-            </div>
-          )}
-          <form onSubmit={handleSubmit} className="max-w-lg mx-auto">
-            <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-700 mb-1">Your Name <span className="text-red-500">*</span></label>
-              <input type="text" name="name" placeholder="e.g., Sarah M." className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500" required />
-            </div>
-            <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-700 mb-1">Your Role</label>
-              <input type="text" name="role" placeholder="e.g., Realtor, Investor" className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500" />
-            </div>
-            <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-700 mb-1">Your Review <span className="text-red-500">*</span></label>
-              <textarea name="review" rows={3} placeholder="How did DealFlow help you?" className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500" required></textarea>
-            </div>
-            <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-700 mb-1">Rating</label>
-              <select name="rating" className="w-full border border-gray-300 rounded-lg px-4 py-2">
-                <option value="5">⭐⭐⭐⭐⭐ (5)</option>
-                <option value="4">⭐⭐⭐⭐☆ (4)</option>
-                <option value="3">⭐⭐⭐☆☆ (3)</option>
-                <option value="2">⭐⭐☆☆☆ (2)</option>
-                <option value="1">⭐☆☆☆☆ (1)</option>
-              </select>
-            </div>
-            <button type="submit" className="w-full bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition font-semibold">Submit Review</button>
-          </form>
-          <p className="text-gray-400 text-sm mt-4 text-center">⚡ Reviews are moderated. Your email will not be published.</p>
-        </div>
-
         {/* CTA */}
         <div className="bg-blue-600 text-white rounded-xl p-8">
           <h2 className="text-2xl font-bold mb-4">Ready to Save Time & Close More Deals?</h2>
-          <Link href="/dashboard" className="bg-white text-blue-700 font-semibold px-8 py-3 rounded-lg hover:bg-blue-50 transition text-lg inline-block">
+          <Link
+            href="/dashboard"
+            className="bg-white text-blue-700 font-semibold px-8 py-3 rounded-lg hover:bg-blue-50 transition text-lg inline-block"
+          >
             🚀 Start Your Free 7-Day Trial
           </Link>
           <p className="text-blue-200 text-sm mt-4">No credit card required. Cancel anytime.</p>
