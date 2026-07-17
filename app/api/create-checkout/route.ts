@@ -16,8 +16,28 @@ export async function POST(request: Request) {
       apiVersion: '2026-06-24.dahlia',
     });
 
+    // Check if customer exists with this email
+    const customers = await stripe.customers.list({
+      email: userEmail,
+      limit: 1,
+    });
+
+    let customerId;
+    if (customers.data.length > 0) {
+      customerId = customers.data[0].id;
+    } else {
+      const customer = await stripe.customers.create({
+        email: userEmail,
+        metadata: {
+          firebaseUid: userId,
+        },
+      });
+      customerId = customer.id;
+    }
+
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ['card'],
+      customer: customerId,
       line_items: [
         {
           price: process.env.NEXT_PUBLIC_STRIPE_PRICE_ID!,

@@ -9,27 +9,41 @@ export default function DashboardPage() {
   const [user, setUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [isSubscribed, setIsSubscribed] = useState(false);
+  const [checking, setChecking] = useState(false);
+  const [retryCount, setRetryCount] = useState(0);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       setUser(firebaseUser);
       if (firebaseUser) {
-        try {
-          const res = await fetch('/api/check-subscription', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ customerId: firebaseUser.uid }),
-          });
-          const data = await res.json();
-          setIsSubscribed(data.subscribed);
-        } catch (error) {
-          setIsSubscribed(false);
-        }
+        await checkSubscription(firebaseUser.uid);
+      } else {
+        setLoading(false);
       }
-      setLoading(false);
     });
     return () => unsubscribe();
-  }, []);
+  }, [retryCount]);
+
+  const checkSubscription = async (userId: string) => {
+    setChecking(true);
+    try {
+      console.log('🔍 Checking subscription for user:', userId);
+      const res = await fetch('/api/check-subscription', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ customerId: userId }),
+      });
+      const data = await res.json();
+      console.log('📦 Subscription response:', data);
+      setIsSubscribed(data.subscribed);
+    } catch (error) {
+      console.error('Error checking subscription:', error);
+      setIsSubscribed(false);
+    } finally {
+      setLoading(false);
+      setChecking(false);
+    }
+  };
 
   const handleSignIn = async () => {
     try {
@@ -69,7 +83,13 @@ export default function DashboardPage() {
     }
   };
 
-  if (loading) {
+  const refreshSubscription = async () => {
+    if (user) {
+      setRetryCount(retryCount + 1);
+    }
+  };
+
+  if (loading || checking) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <p className="text-gray-500">Loading...</p>
@@ -95,20 +115,55 @@ export default function DashboardPage() {
     );
   }
 
+  if (!isSubscribed) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
+        <div className="bg-white rounded-2xl shadow-xl max-w-lg w-full p-8 text-center">
+          <div className="text-6xl mb-4">🔒</div>
+          <h1 className="text-2xl font-bold text-gray-800 mb-2">Subscribe to Unlock</h1>
+          <p className="text-gray-600 mb-4">
+            Get full access to the calculator and start saving deals.
+          </p>
+          <div className="bg-blue-50 rounded-lg p-4 mb-6">
+            <p className="text-blue-700 font-semibold text-lg">$49/month</p>
+            <p className="text-blue-600 text-sm">7-day free trial</p>
+          </div>
+          <button
+            onClick={handleSubscribe}
+            className="w-full bg-purple-600 text-white px-4 py-3 rounded-lg hover:bg-purple-700 transition font-semibold text-lg"
+          >
+            Start Free Trial
+          </button>
+          <button
+            onClick={refreshSubscription}
+            className="mt-2 text-sm text-blue-600 hover:text-blue-800"
+          >
+            Already subscribed? Click here to refresh
+          </button>
+          <p className="text-gray-400 text-sm mt-4">No credit card required to try</p>
+          <button
+            onClick={handleSignOut}
+            className="mt-4 text-sm text-gray-500 hover:text-gray-700"
+          >
+            Sign out
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // Subscribed - show the full dashboard
   return (
     <div className="max-w-5xl mx-auto p-4">
-      {/* Header */}
       <div className="flex justify-between items-center bg-white rounded-xl p-4 shadow-sm mb-6">
         <div>
           <h1 className="text-xl font-semibold text-gray-900">Deal Flow Dashboard</h1>
           <p className="text-sm text-gray-500">{user.email}</p>
         </div>
         <div className="flex items-center gap-3">
-          {isSubscribed && (
-            <span className="text-xs bg-green-100 text-green-700 px-3 py-1 rounded-full font-medium">
-              ✅ Subscribed
-            </span>
-          )}
+          <span className="text-xs bg-green-100 text-green-700 px-3 py-1 rounded-full font-medium">
+            ✅ Subscribed
+          </span>
           <button
             onClick={handleSignOut}
             className="text-sm text-gray-600 hover:text-gray-800 bg-gray-100 px-3 py-1.5 rounded-lg"
@@ -117,36 +172,7 @@ export default function DashboardPage() {
           </button>
         </div>
       </div>
-
-      {/* Calculator Section with Lock Overlay */}
-      <div className="relative">
-        {/* The Calculator (always visible) */}
-        <div className={!isSubscribed ? 'opacity-50 pointer-events-none' : ''}>
-          <DealFlowCalculator />
-        </div>
-
-        {/* Lock Overlay for Non-Subscribers */}
-        {!isSubscribed && (
-          <div className="absolute inset-0 bg-white/80 backdrop-blur-sm rounded-2xl flex flex-col items-center justify-center p-8">
-            <div className="text-6xl mb-4">🔒</div>
-            <h2 className="text-2xl font-bold text-gray-800 mb-2">Subscribe to Unlock</h2>
-            <p className="text-gray-600 mb-4 text-center max-w-md">
-              Get full access to the calculator, save deals, and track your profits.
-            </p>
-            <div className="bg-blue-50 rounded-lg p-4 mb-6 text-center">
-              <p className="text-blue-700 font-semibold text-lg">$49/month</p>
-              <p className="text-blue-600 text-sm">7-day free trial</p>
-            </div>
-            <button
-              onClick={handleSubscribe}
-              className="bg-purple-600 text-white px-8 py-3 rounded-lg hover:bg-purple-700 transition font-semibold text-lg"
-            >
-              Start Free Trial
-            </button>
-            <p className="text-gray-400 text-sm mt-4">No credit card required to try</p>
-          </div>
-        )}
-      </div>
+      <DealFlowCalculator />
     </div>
   );
 }
