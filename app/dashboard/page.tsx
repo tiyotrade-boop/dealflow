@@ -34,7 +34,6 @@ export default function DashboardPage() {
       const data = await res.json();
       setIsSubscribed(data.subscribed);
     } catch (error) {
-      console.error('Error checking subscription:', error);
       setIsSubscribed(false);
     } finally {
       setLoading(false);
