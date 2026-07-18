@@ -16,39 +16,48 @@ export async function POST(request: Request) {
       apiVersion: '2026-06-24.dahlia',
     });
 
-    // Find or create customer
-    let customerId;
-    try {
-      const customers = await stripe.customers.list({
+    // Find or create customer with Firebase UID in metadata
+    let customer;
+    
+    // First, try to find by metadata
+    const allCustomers = await stripe.customers.list({ limit: 100 });
+    const existingCustomer = allCustomers.data.find(
+      c => c.metadata?.firebaseUid === userId
+    );
+
+    if (existingCustomer) {
+      customer = existingCustomer;
+      console.log('✅ Found existing customer with Firebase UID:', userId);
+    } else {
+      // Check if customer exists by email
+      const customersByEmail = await stripe.customers.list({
         email: userEmail,
         limit: 1,
       });
 
-      if (customers.data.length > 0) {
-        customerId = customers.data[0].id;
+      if (customersByEmail.data.length > 0) {
+        // Update existing customer with Firebase UID
+        customer = await stripe.customers.update(customersByEmail.data[0].id, {
+          metadata: {
+            firebaseUid: userId,
+          },
+        });
+        console.log('✅ Updated existing customer with Firebase UID:', userId);
       } else {
-        const customer = await stripe.customers.create({
+        // Create new customer
+        customer = await stripe.customers.create({
           email: userEmail,
           metadata: {
             firebaseUid: userId,
           },
         });
-        customerId = customer.id;
+        console.log('✅ Created new customer with Firebase UID:', userId);
       }
-    } catch (error) {
-      console.error('Error finding/creating customer:', error);
-      const customer = await stripe.customers.create({
-        email: userEmail,
-        metadata: {
-          firebaseUid: userId,
-        },
-      });
-      customerId = customer.id;
     }
 
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ['card'],
-      customer: customerId,
+      customer: customer.id,
       line_items: [
         {
           price: process.env.NEXT_PUBLIC_STRIPE_PRICE_ID!,

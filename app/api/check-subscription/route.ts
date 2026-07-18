@@ -5,7 +5,7 @@ export async function POST(request: Request) {
   try {
     const { customerId } = await request.json();
     
-    console.log('🔍 Checking subscription for customer:', customerId);
+    console.log('🔍 Checking subscription for Firebase UID:', customerId);
 
     if (!customerId) {
       return NextResponse.json({ subscribed: false });
@@ -15,22 +15,40 @@ export async function POST(request: Request) {
       apiVersion: '2026-06-24.dahlia',
     });
 
-    // Get the user's email from Firebase to find their Stripe customer
-    // Since we use email as the customer identifier, we need to find the customer
-    // by email. The customerId is actually the Firebase UID.
-    
-    // First, get all customers with the metadata firebaseUid
-    const customers = await stripe.customers.list({
-      limit: 100,
-    });
+    // Get ALL customers and find by metadata
+    let allCustomers: any[] = [];
+    let hasMore = true;
+    let startingAfter: string | undefined = undefined;
 
-    // Find customer with matching firebaseUid
-    let customer = customers.data.find(
+    while (hasMore) {
+      const response = await stripe.customers.list({
+        limit: 100,
+        starting_after: startingAfter,
+      });
+      allCustomers = allCustomers.concat(response.data);
+      hasMore = response.has_more;
+      if (response.data.length > 0) {
+        startingAfter = response.data[response.data.length - 1].id;
+      }
+    }
+
+    console.log(`📋 Found ${allCustomers.length} total customers in Stripe`);
+
+    // Find customer with matching Firebase UID
+    const customer = allCustomers.find(
       c => c.metadata?.firebaseUid === customerId
     );
 
     if (!customer) {
       console.log('❌ No Stripe customer found for Firebase UID:', customerId);
+      
+      // Try to find by email as fallback
+      console.log('🔍 Trying to find by email...');
+      const userEmail = allCustomers.find(c => c.email);
+      if (userEmail) {
+        console.log(`📧 Found customer by email: ${userEmail.email}`);
+      }
+      
       return NextResponse.json({ subscribed: false });
     }
 
@@ -39,11 +57,11 @@ export async function POST(request: Request) {
     const subscriptions = await stripe.subscriptions.list({
       customer: customer.id,
       status: 'active',
-      limit: 1,
+      limit: 10,
     });
 
+    console.log(`📊 Found ${subscriptions.data.length} active subscriptions`);
     const isSubscribed = subscriptions.data.length > 0;
-    console.log(`✅ Subscription status: ${isSubscribed ? 'ACTIVE' : 'INACTIVE'}`);
 
     return NextResponse.json({
       subscribed: isSubscribed,
