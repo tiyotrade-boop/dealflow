@@ -32,7 +32,7 @@ export default function DashboardPage() {
         body: JSON.stringify({ customerId: userId }),
       });
       const data = await res.json();
-      setIsSubscribed(data.subscribed);
+      setIsSubscribed(data.subscribed === true);
     } catch (error) {
       setIsSubscribed(false);
     } finally {
@@ -112,7 +112,7 @@ export default function DashboardPage() {
     );
   }
 
-  // 🔒 NOT SUBSCRIBED - Show subscribe page (calculator HIDDEN)
+  // LOCKED - Show subscribe page
   if (!isSubscribed) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
@@ -150,7 +150,7 @@ export default function DashboardPage() {
     );
   }
 
-  // ✅ SUBSCRIBED - Show the full calculator
+  // UNLOCKED - Show calculator
   return (
     <div>
       <div className="bg-white border-b border-gray-200 p-4 flex justify-between items-center max-w-5xl mx-auto">
