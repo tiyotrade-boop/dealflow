@@ -10,16 +10,36 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true);
   const [isSubscribed, setIsSubscribed] = useState(false);
   const [checking, setChecking] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
-  // Auth listener - NO automatic subscription check
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
+    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       setUser(firebaseUser);
-      setLoading(false);
+      if (firebaseUser) {
+        await checkSubscription(firebaseUser.uid);
+      } else {
+        setLoading(false);
+      }
     });
     return () => unsubscribe();
   }, []);
+
+  const checkSubscription = async (userId: string) => {
+    setChecking(true);
+    try {
+      const res = await fetch('/api/check-subscription', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ customerId: userId }),
+      });
+      const data = await res.json();
+      setIsSubscribed(data.subscribed);
+    } catch (error) {
+      setIsSubscribed(false);
+    } finally {
+      setLoading(false);
+      setChecking(false);
+    }
+  };
 
   const handleSignIn = async () => {
     try {
@@ -59,36 +79,14 @@ export default function DashboardPage() {
     }
   };
 
-  // Manual refresh - only called when user clicks the button
   const refreshSubscription = async () => {
-    if (!user) return;
-    setChecking(true);
-    setError(null);
-    try {
-      const res = await fetch('/api/check-subscription', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ customerId: user.uid }),
-      });
-      const data = await res.json();
-      setIsSubscribed(data.subscribed);
-      if (data.error) {
-        setError(data.error);
-      }
-    } catch (err: any) {
-      setError(err.message || 'Error checking subscription');
-      setIsSubscribed(false);
+    if (user) {
+      setChecking(true);
+      await checkSubscription(user.uid);
     }
-    setChecking(false);
   };
 
-  // MANUAL OVERRIDE - Click to unlock
-  const forceUnlock = () => {
-    setIsSubscribed(true);
-    setError(null);
-  };
-
-  if (loading) {
+  if (loading || checking) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <p className="text-gray-500">Loading...</p>
@@ -114,7 +112,7 @@ export default function DashboardPage() {
     );
   }
 
-  // 🔒 LOCKED - Show lock screen
+  // 🔒 NOT SUBSCRIBED - Show ONLY subscribe page (calculator is HIDDEN)
   if (!isSubscribed) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
@@ -137,19 +135,9 @@ export default function DashboardPage() {
           <button
             onClick={refreshSubscription}
             className="mt-3 text-sm text-blue-600 hover:text-blue-800 block w-full"
-            disabled={checking}
           >
-            {checking ? 'Checking...' : 'Already subscribed? Click here to refresh'}
+            Already subscribed? Click here to refresh
           </button>
-          <button
-            onClick={forceUnlock}
-            className="mt-3 text-sm text-green-600 hover:text-green-800 block w-full border border-green-300 rounded-lg py-2 font-semibold"
-          >
-            ✅ Unlock Calculator (Manual)
-          </button>
-          {error && (
-            <p className="mt-2 text-sm text-red-500">{error}</p>
-          )}
           <p className="text-gray-400 text-sm mt-4">No credit card required to try</p>
           <button
             onClick={handleSignOut}
@@ -162,7 +150,7 @@ export default function DashboardPage() {
     );
   }
 
-  // ✅ UNLOCKED - Show calculator
+  // ✅ SUBSCRIBED - Show the full calculator
   return (
     <div>
       <div className="bg-white border-b border-gray-200 p-4 flex justify-between items-center max-w-5xl mx-auto">
