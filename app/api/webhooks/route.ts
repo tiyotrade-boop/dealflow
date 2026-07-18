@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import Stripe from 'stripe';
-import { db } from '../../../lib/firebase';
+import { db } from '@/lib/firebase';
 import { doc, setDoc } from 'firebase/firestore';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
@@ -46,11 +46,7 @@ export async function POST(request: Request) {
 
     // Handle subscription canceled/deleted
     if (event.type === 'customer.subscription.deleted') {
-      // Find user by customer ID and set subscribed to false
-      // You'll need to query users by stripeCustomerId
       console.log('⚠️ Subscription canceled');
-      
-      // For now, we'll handle this in the check-subscription API
     }
 
     return NextResponse.json({ received: true });
