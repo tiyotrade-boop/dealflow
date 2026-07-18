@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import Stripe from 'stripe';
-import { db } from '@/lib/firebase';
+import { db } from '../../../lib/firebase';
 import { doc, setDoc } from 'firebase/firestore';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
@@ -24,16 +24,13 @@ export async function POST(request: Request) {
 
     const session = event.data.object as Stripe.Checkout.Session;
 
-    // Handle successful checkout
     if (event.type === 'checkout.session.completed') {
       const userId = session.client_reference_id;
       const customerId = session.customer as string;
       
       console.log('✅ Checkout completed for user:', userId);
-      console.log('✅ Customer ID:', customerId);
       
       if (userId) {
-        // Save subscription status in Firebase
         await setDoc(doc(db, 'users', userId), {
           stripeCustomerId: customerId,
           subscribed: true,
@@ -42,11 +39,6 @@ export async function POST(request: Request) {
         
         console.log('✅ Subscription saved for user:', userId);
       }
-    }
-
-    // Handle subscription canceled/deleted
-    if (event.type === 'customer.subscription.deleted') {
-      console.log('⚠️ Subscription canceled');
     }
 
     return NextResponse.json({ received: true });
