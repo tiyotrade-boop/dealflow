@@ -112,7 +112,7 @@ export default function DashboardPage() {
     );
   }
 
-  // 🔒 NOT SUBSCRIBED - Show ONLY subscribe page (calculator is HIDDEN)
+  // 🔒 NOT SUBSCRIBED - Show subscribe page (calculator HIDDEN)
   if (!isSubscribed) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">

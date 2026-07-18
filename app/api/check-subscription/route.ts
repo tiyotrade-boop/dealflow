@@ -1,17 +1,12 @@
 import { NextResponse } from 'next/server';
-import Stripe from 'stripe';
 
 export async function POST(request: Request) {
   try {
     const { customerId } = await request.json();
     
-    if (!customerId) {
-      return NextResponse.json({ subscribed: false });
-    }
-
-    // For testing - return true for specific user
+    // For testing: Return false (not subscribed)
     // Replace with real Stripe check later
-    return NextResponse.json({ subscribed: true });
+    return NextResponse.json({ subscribed: false });
   } catch (error) {
     return NextResponse.json({ subscribed: false });
   }
