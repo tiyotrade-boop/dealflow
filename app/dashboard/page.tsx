@@ -112,7 +112,7 @@ export default function DashboardPage() {
     );
   }
 
-  // LOCKED - Show subscribe page
+  // 🔒 LOCKED — MUST SUBSCRIBE
   if (!isSubscribed) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
@@ -120,7 +120,7 @@ export default function DashboardPage() {
           <div className="text-6xl mb-4">🔒</div>
           <h1 className="text-2xl font-bold text-gray-800 mb-2">Subscribe to Unlock</h1>
           <p className="text-gray-600 mb-4">
-            Get full access to the calculator and start saving deals.
+            You must subscribe to access the calculator.
           </p>
           <div className="bg-blue-50 rounded-lg p-4 mb-6">
             <p className="text-blue-700 font-semibold text-lg">$49/month</p>
@@ -136,7 +136,7 @@ export default function DashboardPage() {
             onClick={refreshSubscription}
             className="mt-3 text-sm text-blue-600 hover:text-blue-800 block w-full"
           >
-            Already subscribed? Click here to refresh
+            Already subscribed? Refresh
           </button>
           <p className="text-gray-400 text-sm mt-4">No credit card required to try</p>
           <button
@@ -150,7 +150,7 @@ export default function DashboardPage() {
     );
   }
 
-  // UNLOCKED - Show calculator
+  // ✅ SUBSCRIBED — Show calculator
   return (
     <div>
       <div className="bg-white border-b border-gray-200 p-4 flex justify-between items-center max-w-5xl mx-auto">

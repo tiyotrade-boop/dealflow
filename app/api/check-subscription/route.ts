@@ -18,15 +18,9 @@ export async function POST(request: Request) {
       limit: 100,
     });
 
-    // Find customer with matching Firebase UID in metadata
-    let stripeCustomer = customers.data.find(
+    const stripeCustomer = customers.data.find(
       c => c.metadata?.firebaseUid === customerId
     );
-
-    // If not found by metadata, try to find by email
-    if (!stripeCustomer) {
-      console.log('Customer not found by metadata, trying by email...');
-    }
 
     if (!stripeCustomer) {
       return NextResponse.json({ subscribed: false });
@@ -38,9 +32,9 @@ export async function POST(request: Request) {
       limit: 1,
     });
 
-    const isSubscribed = subscriptions.data.length > 0;
-    
-    return NextResponse.json({ subscribed: isSubscribed });
+    return NextResponse.json({
+      subscribed: subscriptions.data.length > 0,
+    });
   } catch (error: any) {
     console.error('Error checking subscription:', error.message);
     return NextResponse.json({ subscribed: false });
