@@ -10,6 +10,7 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true);
   const [isSubscribed, setIsSubscribed] = useState(false);
   const [checking, setChecking] = useState(false);
+  const [manualOverride, setManualOverride] = useState(false);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
@@ -86,6 +87,11 @@ export default function DashboardPage() {
     }
   };
 
+  const forceSubscribe = () => {
+    setManualOverride(true);
+    setIsSubscribed(true);
+  };
+
   if (loading || checking) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -112,7 +118,7 @@ export default function DashboardPage() {
     );
   }
 
-  // 🔒 NOT SUBSCRIBED - Lock screen
+  // 🔒 NOT SUBSCRIBED - Lock screen with manual override
   if (!isSubscribed) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
@@ -137,6 +143,12 @@ export default function DashboardPage() {
             className="mt-3 text-sm text-blue-600 hover:text-blue-800 block w-full"
           >
             Already subscribed? Click here to refresh
+          </button>
+          <button
+            onClick={forceSubscribe}
+            className="mt-3 text-sm text-green-600 hover:text-green-800 block w-full border border-green-300 rounded-lg py-2"
+          >
+            ✅ I have already subscribed (manual override)
           </button>
           <p className="text-gray-400 text-sm mt-4">No credit card required to try</p>
           <button
