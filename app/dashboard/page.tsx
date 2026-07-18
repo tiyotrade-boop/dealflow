@@ -86,6 +86,11 @@ export default function DashboardPage() {
     }
   };
 
+  // MANUAL OVERRIDE for testing
+  const forceSubscribe = () => {
+    setIsSubscribed(true);
+  };
+
   if (loading || checking) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -112,6 +117,7 @@ export default function DashboardPage() {
     );
   }
 
+  // 🔒 NOT SUBSCRIBED - Show lock screen
   if (!isSubscribed) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
@@ -137,6 +143,12 @@ export default function DashboardPage() {
           >
             Already subscribed? Click here to refresh
           </button>
+          <button
+            onClick={forceSubscribe}
+            className="mt-3 text-sm text-green-600 hover:text-green-800 block w-full border border-green-300 rounded-lg py-2"
+          >
+            ✅ I already subscribed (manual override)
+          </button>
           <p className="text-gray-400 text-sm mt-4">No credit card required to try</p>
           <button
             onClick={handleSignOut}
@@ -149,7 +161,7 @@ export default function DashboardPage() {
     );
   }
 
-  // Subscribed - show the full calculator
+  // ✅ SUBSCRIBED - Show the full calculator
   return (
     <div className="max-w-5xl mx-auto p-4">
       <div className="flex justify-between items-center bg-white rounded-xl p-4 shadow-sm mb-6">

@@ -2,13 +2,6 @@
 
 import { useEffect, useState } from 'react';
 import {
-  GoogleAuthProvider,
-  onAuthStateChanged,
-  signInWithPopup,
-  signOut,
-  type User,
-} from 'firebase/auth';
-import {
   addDoc,
   collection,
   deleteDoc,
@@ -48,8 +41,7 @@ const DEFAULT_VALUES: CalculatorValues = {
 };
 
 export default function DealFlowDashboard() {
-  const [user, setUser] = useState<User | null>(null);
-  const [authLoading, setAuthLoading] = useState(true);
+  const [user, setUser] = useState<any>(null);
   const [calcValues, setCalcValues] = useState<CalculatorValues>(DEFAULT_VALUES);
   const [deals, setDeals] = useState<SavedDeal[]>([]);
   const [dealsLoading, setDealsLoading] = useState(false);
@@ -57,18 +49,16 @@ export default function DealFlowDashboard() {
   const [error, setError] = useState<string | null>(null);
   const [showDealModal, setShowDealModal] = useState(false);
   const [dealName, setDealName] = useState('');
-  const [isSubscribed, setIsSubscribed] = useState(true); // Set to true for now
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
+    const unsubscribe = auth.onAuthStateChanged((firebaseUser) => {
       setUser(firebaseUser);
-      setAuthLoading(false);
     });
     return () => unsubscribe();
   }, []);
 
   useEffect(() => {
-    if (!user || !isSubscribed) {
+    if (!user) {
       setDeals([]);
       return;
     }
@@ -109,34 +99,11 @@ export default function DealFlowDashboard() {
     );
 
     return () => unsubscribe();
-  }, [user, isSubscribed]);
-
-  const handleSignIn = async () => {
-    setError(null);
-    try {
-      const result = await signInWithPopup(auth, new GoogleAuthProvider());
-      setUser(result.user);
-    } catch (err) {
-      console.error('Sign-in failed:', err);
-      setError('Sign-in failed. Please try again.');
-    }
-  };
-
-  const handleSignOut = async () => {
-    try {
-      await signOut(auth);
-    } catch (err) {
-      console.error('Sign-out failed:', err);
-    }
-  };
+  }, [user]);
 
   const handleSaveDeal = () => {
     if (!user) {
       setError('Please sign in to save deals.');
-      return;
-    }
-    if (!isSubscribed) {
-      setError('Please subscribe to save deals.');
       return;
     }
     setShowDealModal(true);
@@ -221,10 +188,6 @@ export default function DealFlowDashboard() {
         {!user ? (
           <p className="px-4 py-6 text-sm text-gray-400">
             Sign in to view your saved deals.
-          </p>
-        ) : !isSubscribed ? (
-          <p className="px-4 py-6 text-sm text-gray-400">
-            Subscribe to save and view your deals.
           </p>
         ) : dealsLoading ? (
           <p className="px-4 py-6 text-sm text-gray-400">Loading deals…</p>
