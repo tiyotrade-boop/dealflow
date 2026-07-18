@@ -112,7 +112,7 @@ export default function DashboardPage() {
     );
   }
 
-  // 🔒 NOT SUBSCRIBED - Show lock screen (calculator is HIDDEN)
+  // 🔒 NOT SUBSCRIBED - Lock screen
   if (!isSubscribed) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
@@ -150,7 +150,7 @@ export default function DashboardPage() {
     );
   }
 
-  // ✅ SUBSCRIBED - Show the full calculator
+  // ✅ SUBSCRIBED - Show full app
   return (
     <div>
       <div className="bg-white border-b border-gray-200 p-4 flex justify-between items-center max-w-5xl mx-auto">

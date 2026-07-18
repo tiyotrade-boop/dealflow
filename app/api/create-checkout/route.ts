@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server';
 import Stripe from 'stripe';
+import { db } from '../../lib/firebase';
+import { doc, setDoc } from 'firebase/firestore';
 
 export async function POST(request: Request) {
   try {
@@ -16,44 +18,28 @@ export async function POST(request: Request) {
       apiVersion: '2026-06-24.dahlia',
     });
 
-    // Find or create customer with Firebase UID in metadata
+    // Create or get customer
     let customer;
-    
-    // First, try to find by metadata
-    const allCustomers = await stripe.customers.list({ limit: 100 });
-    const existingCustomer = allCustomers.data.find(
-      c => c.metadata?.firebaseUid === userId
-    );
+    const existingCustomers = await stripe.customers.list({
+      email: userEmail,
+      limit: 1,
+    });
 
-    if (existingCustomer) {
-      customer = existingCustomer;
-      console.log('✅ Found existing customer with Firebase UID:', userId);
+    if (existingCustomers.data.length > 0) {
+      customer = existingCustomers.data[0];
     } else {
-      // Check if customer exists by email
-      const customersByEmail = await stripe.customers.list({
+      customer = await stripe.customers.create({
         email: userEmail,
-        limit: 1,
+        metadata: { firebaseUid: userId },
       });
-
-      if (customersByEmail.data.length > 0) {
-        // Update existing customer with Firebase UID
-        customer = await stripe.customers.update(customersByEmail.data[0].id, {
-          metadata: {
-            firebaseUid: userId,
-          },
-        });
-        console.log('✅ Updated existing customer with Firebase UID:', userId);
-      } else {
-        // Create new customer
-        customer = await stripe.customers.create({
-          email: userEmail,
-          metadata: {
-            firebaseUid: userId,
-          },
-        });
-        console.log('✅ Created new customer with Firebase UID:', userId);
-      }
     }
+
+    // Store customer ID in Firebase
+    await setDoc(doc(db, 'users', userId), {
+      email: userEmail,
+      stripeCustomerId: customer.id,
+      updatedAt: new Date().toISOString(),
+    }, { merge: true });
 
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ['card'],
