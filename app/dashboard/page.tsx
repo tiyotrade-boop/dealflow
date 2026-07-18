@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { onAuthStateChanged, signInWithPopup, GoogleAuthProvider, signOut } from 'firebase/auth';
 import { auth } from '../lib/firebase';
-import DealFlowCalculator from '../components/DealFlowCalculator';
+import DealFlowDashboard from '../components/DealFlowDashboard';
 
 export default function DashboardPage() {
   const [user, setUser] = useState<any>(null);
@@ -59,5 +59,22 @@ export default function DashboardPage() {
     );
   }
 
-  return <DealFlowCalculator />;
+  // THIS IS THE KEY CHANGE - Return DealFlowDashboard, not DealFlowCalculator
+  return (
+    <div>
+      <div className="bg-white border-b border-gray-200 p-4 flex justify-between items-center max-w-5xl mx-auto">
+        <div>
+          <span className="font-semibold text-gray-800">DealFlow</span>
+          <span className="text-sm text-gray-500 ml-3">{user.email}</span>
+        </div>
+        <button
+          onClick={handleSignOut}
+          className="text-sm text-gray-600 hover:text-gray-800 bg-gray-100 px-3 py-1.5 rounded-lg"
+        >
+          Sign out
+        </button>
+      </div>
+      <DealFlowDashboard />
+    </div>
+  );
 }
