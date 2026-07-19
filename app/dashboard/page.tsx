@@ -8,18 +8,39 @@ import DealFlowDashboard from '../components/DealFlowDashboard';
 export default function DashboardPage() {
   const [user, setUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
-
-  // 🔒 CHANGE THIS TO UNLOCK:
-  // Set to true to see the calculator, false to lock it
-  const FORCE_SUBSCRIBED = true; // <-- CHANGE THIS TO true TO UNLOCK
+  const [isSubscribed, setIsSubscribed] = useState(false);
+  const [checking, setChecking] = useState(false);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
+    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       setUser(firebaseUser);
-      setLoading(false);
+      if (firebaseUser) {
+        await checkSubscription(firebaseUser.uid);
+      } else {
+        setLoading(false);
+      }
     });
     return () => unsubscribe();
   }, []);
+
+  const checkSubscription = async (userId: string) => {
+    setChecking(true);
+    try {
+      const res = await fetch('/api/check-subscription', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ customerId: userId }),
+      });
+      const data = await res.json();
+      setIsSubscribed(data.subscribed === true);
+    } catch (error) {
+      console.error('Error checking subscription:', error);
+      setIsSubscribed(false);
+    } finally {
+      setLoading(false);
+      setChecking(false);
+    }
+  };
 
   const handleSignIn = async () => {
     try {
@@ -59,7 +80,26 @@ export default function DashboardPage() {
     }
   };
 
-  if (loading) {
+  const refreshSubscription = async () => {
+    if (user) {
+      setChecking(true);
+      try {
+        const res = await fetch('/api/check-subscription', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ customerId: user.uid }),
+        });
+        const data = await res.json();
+        setIsSubscribed(data.subscribed === true);
+      } catch (error) {
+        console.error('Error refreshing:', error);
+        setIsSubscribed(false);
+      }
+      setChecking(false);
+    }
+  };
+
+  if (loading || checking) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <p className="text-gray-500">Loading...</p>
@@ -85,8 +125,8 @@ export default function DashboardPage() {
     );
   }
 
-  // 🔒 LOCKED
-  if (!FORCE_SUBSCRIBED) {
+  // 🔒 LOCKED — MUST SUBSCRIBE
+  if (!isSubscribed) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
         <div className="bg-white rounded-2xl shadow-xl max-w-lg w-full p-8 text-center">
@@ -105,6 +145,12 @@ export default function DashboardPage() {
           >
             Start Free Trial
           </button>
+          <button
+            onClick={refreshSubscription}
+            className="mt-3 text-sm text-blue-600 hover:text-blue-800 block w-full"
+          >
+            Already subscribed? Click here to refresh
+          </button>
           <p className="text-gray-400 text-sm mt-4">No credit card required to try</p>
           <button
             onClick={handleSignOut}
@@ -117,7 +163,7 @@ export default function DashboardPage() {
     );
   }
 
-  // ✅ UNLOCKED — Show calculator
+  // ✅ SUBSCRIBED — Show calculator
   return (
     <div>
       <div className="bg-white border-b border-gray-200 p-4 flex justify-between items-center max-w-5xl mx-auto">

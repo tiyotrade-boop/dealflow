@@ -1,58 +1,53 @@
 'use client';
 
-import { Suspense } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { useEffect, useState } from 'react';
-import { db } from '../lib/firebase';
 import { doc, setDoc } from 'firebase/firestore';
+import { db } from '../lib/firebase';
 import Link from 'next/link';
 
 function SuccessContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [saving, setSaving] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [status, setStatus] = useState<'saving' | 'saved' | 'error'>('saving');
+  const [errorMsg, setErrorMsg] = useState('');
 
   useEffect(() => {
     const saveSubscription = async () => {
       try {
         const userId = searchParams.get('user_id');
-        const sessionId = searchParams.get('session_id');
         
-        console.log('📝 Saving subscription for user:', userId);
-        console.log('📝 Session ID:', sessionId);
-
         if (!userId) {
-          setError('No user ID found');
-          setSaving(false);
+          setStatus('error');
+          setErrorMsg('No user ID found');
           return;
         }
 
+        // Save subscription status to Firebase
         await setDoc(doc(db, 'users', userId), {
           subscribed: true,
           subscribedAt: new Date().toISOString(),
-          stripeSessionId: sessionId || 'unknown',
         }, { merge: true });
 
-        console.log('✅ Subscription saved successfully!');
-        setSaving(false);
-
+        setStatus('saved');
+        
+        // Redirect to dashboard after 2 seconds
         setTimeout(() => {
           router.push('/dashboard');
         }, 2000);
-      } catch (err) {
+      } catch (err: any) {
         console.error('❌ Error saving subscription:', err);
-        setError('Could not save subscription status. Please contact support.');
-        setSaving(false);
+        setStatus('error');
+        setErrorMsg(err.message || 'Failed to save subscription');
       }
     };
 
     saveSubscription();
   }, [router, searchParams]);
 
-  if (saving) {
+  if (status === 'saving') {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="text-center">
           <div className="text-4xl mb-4">⏳</div>
           <p className="text-gray-600">Activating your subscription...</p>
@@ -64,14 +59,14 @@ function SuccessContent() {
     );
   }
 
-  if (error) {
+  if (status === 'error') {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
         <div className="bg-white rounded-2xl shadow-xl max-w-md w-full p-8 text-center">
-          <div className="text-5xl mb-4">😅</div>
+          <div className="text-5xl mb-4">❌</div>
           <h1 className="text-xl font-bold text-gray-800 mb-2">Something went wrong</h1>
-          <p className="text-gray-600 mb-6">{error}</p>
-          <Link href="/dashboard" className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition">
+          <p className="text-gray-600 mb-6">{errorMsg || 'Could not activate subscription'}</p>
+          <Link href="/dashboard" className="inline-block bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition">
             Go to Dashboard
           </Link>
         </div>
@@ -89,9 +84,9 @@ function SuccessContent() {
           <br />
           <span className="text-sm text-gray-400">Redirecting to dashboard...</span>
         </p>
-        <Link href="/dashboard" className="inline-block bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition">
-          Go to Dashboard Now
-        </Link>
+        <div className="w-full h-1 bg-gray-200 rounded-full overflow-hidden">
+          <div className="w-full h-full bg-green-500 animate-pulse"></div>
+        </div>
       </div>
     </div>
   );
