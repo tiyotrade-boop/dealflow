@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { db } from '@/lib/firebase';
+import { db } from '../../lib/firebase';
 import { doc, getDoc } from 'firebase/firestore';
 
 export async function POST(request: Request) {
@@ -12,7 +12,6 @@ export async function POST(request: Request) {
       return NextResponse.json({ subscribed: false });
     }
 
-    // Read subscription status from Firebase
     const userDoc = await getDoc(doc(db, 'users', customerId));
     
     if (!userDoc.exists()) {

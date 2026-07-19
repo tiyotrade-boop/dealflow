@@ -1,7 +1,5 @@
 import { NextResponse } from 'next/server';
 import Stripe from 'stripe';
-import { db } from '@/lib/firebase';
-import { doc, setDoc } from 'firebase/firestore';
 
 export async function POST(request: Request) {
   try {
@@ -9,11 +7,18 @@ export async function POST(request: Request) {
     
     console.log('📞 Creating checkout for user:', userId);
 
-    const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
+    if (!process.env.STRIPE_SECRET_KEY) {
+      console.error('❌ STRIPE_SECRET_KEY is missing');
+      return NextResponse.json(
+        { error: 'Stripe secret key is not configured' },
+        { status: 500 }
+      );
+    }
+
+    const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
       apiVersion: '2026-06-24.dahlia',
     });
 
-    // Create checkout session
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ['card'],
       line_items: [
@@ -23,13 +28,10 @@ export async function POST(request: Request) {
         },
       ],
       mode: 'subscription',
-      success_url: 'https://dealflowapp.app/success?session_id={CHECKOUT_SESSION_ID}&user_id=' + userId,
+      success_url: `https://dealflowapp.app/success?session_id={CHECKOUT_SESSION_ID}&user_id=${userId}`,
       cancel_url: 'https://dealflowapp.app/cancel',
       client_reference_id: userId,
       customer_email: userEmail,
-      metadata: {
-        firebaseUid: userId,
-      },
     });
 
     console.log('✅ Checkout session created:', session.id);

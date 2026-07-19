@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { onAuthStateChanged, signInWithPopup, GoogleAuthProvider, signOut } from 'firebase/auth';
-import { auth } from '@/lib/firebase';
+import { auth } from '../lib/firebase';
 import DealFlowDashboard from '../components/DealFlowDashboard';
 
 export default function DashboardPage() {
@@ -112,7 +112,6 @@ export default function DashboardPage() {
     );
   }
 
-  // 🔒 LOCKED — MUST SUBSCRIBE
   if (!isSubscribed) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
@@ -150,7 +149,6 @@ export default function DashboardPage() {
     );
   }
 
-  // ✅ SUBSCRIBED — Show calculator
   return (
     <div>
       <div className="bg-white border-b border-gray-200 p-4 flex justify-between items-center max-w-5xl mx-auto">

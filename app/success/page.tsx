@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { db } from '@/lib/firebase';
+import { db } from '../lib/firebase';
 import { doc, setDoc } from 'firebase/firestore';
 import Link from 'next/link';
 
@@ -27,7 +27,6 @@ export default function SuccessPage() {
           return;
         }
 
-        // Save subscription status in Firebase
         await setDoc(doc(db, 'users', userId), {
           subscribed: true,
           subscribedAt: new Date().toISOString(),
@@ -37,7 +36,6 @@ export default function SuccessPage() {
         console.log('✅ Subscription saved successfully!');
         setSaving(false);
 
-        // Redirect to dashboard after 2 seconds
         setTimeout(() => {
           router.push('/dashboard');
         }, 2000);
