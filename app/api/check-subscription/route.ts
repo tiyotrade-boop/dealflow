@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { adminDb } from '../../../lib/firebase-admin';
+import { adminDb } from '../../lib/firebase-admin';
 
 export async function POST(request: Request) {
   try {
@@ -11,7 +11,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ subscribed: false });
     }
 
-    // Read from Firebase using Admin SDK
+    // Read subscription status from Firebase using Admin SDK
     const userDoc = await adminDb.collection('users').doc(customerId).get();
     
     if (!userDoc.exists) {
