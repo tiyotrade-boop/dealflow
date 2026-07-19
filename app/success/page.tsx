@@ -1,37 +1,81 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { onAuthStateChanged } from 'firebase/auth';
-import { auth } from '../lib/firebase';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { db } from '@/lib/firebase';
+import { doc, setDoc } from 'firebase/firestore';
 import Link from 'next/link';
 
 export default function SuccessPage() {
-  const [loading, setLoading] = useState(true);
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const [saving, setSaving] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    // Wait for auth to be ready
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      if (user) {
-        // User is signed in, redirect to dashboard after 2 seconds
+    const saveSubscription = async () => {
+      try {
+        const userId = searchParams.get('user_id');
+        const sessionId = searchParams.get('session_id');
+        
+        console.log('📝 Saving subscription for user:', userId);
+        console.log('📝 Session ID:', sessionId);
+
+        if (!userId) {
+          setError('No user ID found');
+          setSaving(false);
+          return;
+        }
+
+        // Save subscription status in Firebase
+        await setDoc(doc(db, 'users', userId), {
+          subscribed: true,
+          subscribedAt: new Date().toISOString(),
+          stripeSessionId: sessionId || 'unknown',
+        }, { merge: true });
+
+        console.log('✅ Subscription saved successfully!');
+        setSaving(false);
+
+        // Redirect to dashboard after 2 seconds
         setTimeout(() => {
           router.push('/dashboard');
         }, 2000);
-        setLoading(false);
-      } else {
-        // User not signed in, redirect to home
-        router.push('/');
+      } catch (err) {
+        console.error('❌ Error saving subscription:', err);
+        setError('Could not save subscription status. Please contact support.');
+        setSaving(false);
       }
-    });
+    };
 
-    return () => unsubscribe();
-  }, [router]);
+    saveSubscription();
+  }, [router, searchParams]);
 
-  if (loading) {
+  if (saving) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <p className="text-gray-500">Processing your subscription...</p>
+        <div className="text-center">
+          <div className="text-4xl mb-4">⏳</div>
+          <p className="text-gray-600">Activating your subscription...</p>
+          <div className="mt-4 w-48 h-1 bg-gray-200 rounded-full overflow-hidden">
+            <div className="w-full h-full bg-blue-600 animate-pulse"></div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
+        <div className="bg-white rounded-2xl shadow-xl max-w-md w-full p-8 text-center">
+          <div className="text-5xl mb-4">😅</div>
+          <h1 className="text-xl font-bold text-gray-800 mb-2">Something went wrong</h1>
+          <p className="text-gray-600 mb-6">{error}</p>
+          <Link href="/dashboard" className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition">
+            Go to Dashboard
+          </Link>
+        </div>
       </div>
     );
   }
@@ -44,17 +88,11 @@ export default function SuccessPage() {
         <p className="text-gray-600 mb-6">
           Thank you for subscribing to DealFlow Pro!
           <br />
-          <span className="text-sm text-gray-400">You will be redirected to the dashboard...</span>
+          <span className="text-sm text-gray-400">Redirecting to dashboard...</span>
         </p>
-        <Link
-          href="/dashboard"
-          className="inline-block bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition"
-        >
+        <Link href="/dashboard" className="inline-block bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition">
           Go to Dashboard Now
         </Link>
-        <div className="mt-4 w-full bg-gray-200 rounded-full h-1">
-          <div className="bg-blue-600 h-1 rounded-full animate-pulse w-full"></div>
-        </div>
       </div>
     </div>
   );

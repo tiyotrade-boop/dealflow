@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server';
 import Stripe from 'stripe';
+import { db } from '@/lib/firebase';
+import { doc, setDoc } from 'firebase/firestore';
 
 export async function POST(request: Request) {
   try {
@@ -7,47 +9,13 @@ export async function POST(request: Request) {
     
     console.log('📞 Creating checkout for user:', userId);
 
-    if (!process.env.STRIPE_SECRET_KEY) {
-      console.error('❌ STRIPE_SECRET_KEY is missing');
-      return NextResponse.json(
-        { error: 'Stripe secret key is not configured' },
-        { status: 500 }
-      );
-    }
-
-    const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
+    const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
       apiVersion: '2026-06-24.dahlia',
     });
 
-    // Check if customer exists with this email
-    const existingCustomers = await stripe.customers.list({
-      email: userEmail,
-      limit: 1,
-    });
-
-    let customer;
-    if (existingCustomers.data.length > 0) {
-      customer = existingCustomers.data[0];
-      // Update metadata with Firebase UID
-      await stripe.customers.update(customer.id, {
-        metadata: {
-          firebaseUid: userId,
-        },
-      });
-      console.log('✅ Updated existing customer:', customer.id);
-    } else {
-      customer = await stripe.customers.create({
-        email: userEmail,
-        metadata: {
-          firebaseUid: userId,
-        },
-      });
-      console.log('✅ Created new customer:', customer.id);
-    }
-
+    // Create checkout session
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ['card'],
-      customer: customer.id,
       line_items: [
         {
           price: process.env.NEXT_PUBLIC_STRIPE_PRICE_ID!,
@@ -55,9 +23,13 @@ export async function POST(request: Request) {
         },
       ],
       mode: 'subscription',
-      success_url: 'https://dealflowapp.app/success',
+      success_url: 'https://dealflowapp.app/success?session_id={CHECKOUT_SESSION_ID}&user_id=' + userId,
       cancel_url: 'https://dealflowapp.app/cancel',
       client_reference_id: userId,
+      customer_email: userEmail,
+      metadata: {
+        firebaseUid: userId,
+      },
     });
 
     console.log('✅ Checkout session created:', session.id);
