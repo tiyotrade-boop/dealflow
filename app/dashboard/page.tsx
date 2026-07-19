@@ -15,6 +15,7 @@ export default function DashboardPage() {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       setUser(firebaseUser);
       if (firebaseUser) {
+        console.log('🔍 User signed in:', firebaseUser.uid);
         await checkSubscription(firebaseUser.uid);
       } else {
         setLoading(false);
@@ -26,6 +27,7 @@ export default function DashboardPage() {
   const checkSubscription = async (userId: string) => {
     setChecking(true);
     try {
+      console.log('📡 Calling /api/check-subscription for user:', userId);
       const res = await fetch('/api/check-subscription', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -35,7 +37,7 @@ export default function DashboardPage() {
       console.log('📦 Subscription check response:', data);
       setIsSubscribed(data.subscribed === true);
     } catch (error) {
-      console.error('Error checking subscription:', error);
+      console.error('❌ Error checking subscription:', error);
       setIsSubscribed(false);
     } finally {
       setLoading(false);
