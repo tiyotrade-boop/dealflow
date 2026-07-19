@@ -8,9 +8,10 @@ import DealFlowDashboard from '../components/DealFlowDashboard';
 export default function DashboardPage() {
   const [user, setUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
-  
-  // 🔒 FORCE LOCK - Change to true to unlock, false to lock
-  const FORCE_SUBSCRIBED = false; // <-- SET THIS!
+
+  // 🔒 CHANGE THIS TO UNLOCK:
+  // Set to true to see the calculator, false to lock it
+  const FORCE_SUBSCRIBED = true; // <-- CHANGE THIS TO true TO UNLOCK
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
@@ -33,6 +34,28 @@ export default function DashboardPage() {
       await signOut(auth);
     } catch (error) {
       console.error('Sign-out failed:', error);
+    }
+  };
+
+  const handleSubscribe = async () => {
+    try {
+      const response = await fetch('/api/create-checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId: user?.uid,
+          userEmail: user?.email,
+        }),
+      });
+      const data = await response.json();
+      if (data.error) {
+        alert(data.error);
+        return;
+      }
+      window.location.href = data.url;
+    } catch (error) {
+      console.error('Error:', error);
+      alert('Something went wrong. Please try again.');
     }
   };
 
@@ -77,26 +100,7 @@ export default function DashboardPage() {
             <p className="text-blue-600 text-sm">7-day free trial</p>
           </div>
           <button
-            onClick={async () => {
-              try {
-                const res = await fetch('/api/create-checkout', {
-                  method: 'POST',
-                  headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({
-                    userId: user?.uid,
-                    userEmail: user?.email,
-                  }),
-                });
-                const data = await res.json();
-                if (data.error) {
-                  alert(data.error);
-                  return;
-                }
-                window.location.href = data.url;
-              } catch (error) {
-                alert('Something went wrong. Please try again.');
-              }
-            }}
+            onClick={handleSubscribe}
             className="w-full bg-purple-600 text-white px-4 py-3 rounded-lg hover:bg-purple-700 transition font-semibold text-lg"
           >
             Start Free Trial
