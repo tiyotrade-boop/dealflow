@@ -32,8 +32,10 @@ export default function DashboardPage() {
         body: JSON.stringify({ customerId: userId }),
       });
       const data = await res.json();
+      console.log('📦 Subscription check response:', data);
       setIsSubscribed(data.subscribed === true);
     } catch (error) {
+      console.error('Error checking subscription:', error);
       setIsSubscribed(false);
     } finally {
       setLoading(false);
@@ -82,7 +84,19 @@ export default function DashboardPage() {
   const refreshSubscription = async () => {
     if (user) {
       setChecking(true);
-      await checkSubscription(user.uid);
+      try {
+        const res = await fetch('/api/check-subscription', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ customerId: user.uid }),
+        });
+        const data = await res.json();
+        console.log('📦 Refreshed subscription status:', data);
+        setIsSubscribed(data.subscribed === true);
+      } catch (error) {
+        console.error('Error refreshing:', error);
+      }
+      setChecking(false);
     }
   };
 
@@ -112,6 +126,7 @@ export default function DashboardPage() {
     );
   }
 
+  // 🔒 LOCKED — MUST SUBSCRIBE
   if (!isSubscribed) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
@@ -135,7 +150,7 @@ export default function DashboardPage() {
             onClick={refreshSubscription}
             className="mt-3 text-sm text-blue-600 hover:text-blue-800 block w-full"
           >
-            Already subscribed? Refresh
+            Already subscribed? Click here to refresh
           </button>
           <p className="text-gray-400 text-sm mt-4">No credit card required to try</p>
           <button
@@ -149,6 +164,7 @@ export default function DashboardPage() {
     );
   }
 
+  // ✅ SUBSCRIBED — Show calculator
   return (
     <div>
       <div className="bg-white border-b border-gray-200 p-4 flex justify-between items-center max-w-5xl mx-auto">
