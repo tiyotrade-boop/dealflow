@@ -15,7 +15,6 @@ export default function DashboardPage() {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       setUser(firebaseUser);
       if (firebaseUser) {
-        console.log('🔍 User signed in:', firebaseUser.uid);
         await checkSubscription(firebaseUser.uid);
       } else {
         setLoading(false);
@@ -27,7 +26,6 @@ export default function DashboardPage() {
   const checkSubscription = async (userId: string) => {
     setChecking(true);
     try {
-      console.log('📡 Calling /api/check-subscription for user:', userId);
       const res = await fetch('/api/check-subscription', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -35,9 +33,10 @@ export default function DashboardPage() {
       });
       const data = await res.json();
       console.log('📦 Subscription check response:', data);
+      // ONLY set to true if data.subscribed is explicitly true
       setIsSubscribed(data.subscribed === true);
     } catch (error) {
-      console.error('❌ Error checking subscription:', error);
+      console.error('Error checking subscription:', error);
       setIsSubscribed(false);
     } finally {
       setLoading(false);
@@ -97,6 +96,7 @@ export default function DashboardPage() {
         setIsSubscribed(data.subscribed === true);
       } catch (error) {
         console.error('Error refreshing:', error);
+        setIsSubscribed(false);
       }
       setChecking(false);
     }
@@ -128,7 +128,7 @@ export default function DashboardPage() {
     );
   }
 
-  // 🔒 LOCKED — MUST SUBSCRIBE
+  // 🔒 LOCKED — ALWAYS SHOW SUBSCRIBE PAGE UNLESS SUBSCRIBED
   if (!isSubscribed) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
