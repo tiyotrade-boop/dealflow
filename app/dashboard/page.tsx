@@ -8,41 +8,17 @@ import DealFlowDashboard from '../components/DealFlowDashboard';
 export default function DashboardPage() {
   const [user, setUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
-  const [isSubscribed, setIsSubscribed] = useState(false);
-  const [checking, setChecking] = useState(false);
+  
+  // 🔒 FORCE LOCK - Change to true to unlock, false to lock
+  const FORCE_SUBSCRIBED = false; // <-- SET THIS!
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+    const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
       setUser(firebaseUser);
-      if (firebaseUser) {
-        await checkSubscription(firebaseUser.uid);
-      } else {
-        setLoading(false);
-      }
+      setLoading(false);
     });
     return () => unsubscribe();
   }, []);
-
-  const checkSubscription = async (userId: string) => {
-    setChecking(true);
-    try {
-      const res = await fetch('/api/check-subscription', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ customerId: userId }),
-      });
-      const data = await res.json();
-      console.log('📦 Subscription check response:', data);
-      // ONLY set to true if data.subscribed is explicitly true
-      setIsSubscribed(data.subscribed === true);
-    } catch (error) {
-      console.error('Error checking subscription:', error);
-      setIsSubscribed(false);
-    } finally {
-      setLoading(false);
-      setChecking(false);
-    }
-  };
 
   const handleSignIn = async () => {
     try {
@@ -60,49 +36,7 @@ export default function DashboardPage() {
     }
   };
 
-  const handleSubscribe = async () => {
-    try {
-      const response = await fetch('/api/create-checkout', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          userId: user?.uid,
-          userEmail: user?.email,
-        }),
-      });
-      const data = await response.json();
-      if (data.error) {
-        alert(data.error);
-        return;
-      }
-      window.location.href = data.url;
-    } catch (error) {
-      console.error('Error:', error);
-      alert('Something went wrong. Please try again.');
-    }
-  };
-
-  const refreshSubscription = async () => {
-    if (user) {
-      setChecking(true);
-      try {
-        const res = await fetch('/api/check-subscription', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ customerId: user.uid }),
-        });
-        const data = await res.json();
-        console.log('📦 Refreshed subscription status:', data);
-        setIsSubscribed(data.subscribed === true);
-      } catch (error) {
-        console.error('Error refreshing:', error);
-        setIsSubscribed(false);
-      }
-      setChecking(false);
-    }
-  };
-
-  if (loading || checking) {
+  if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <p className="text-gray-500">Loading...</p>
@@ -128,8 +62,8 @@ export default function DashboardPage() {
     );
   }
 
-  // 🔒 LOCKED — ALWAYS SHOW SUBSCRIBE PAGE UNLESS SUBSCRIBED
-  if (!isSubscribed) {
+  // 🔒 LOCKED
+  if (!FORCE_SUBSCRIBED) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
         <div className="bg-white rounded-2xl shadow-xl max-w-lg w-full p-8 text-center">
@@ -143,16 +77,29 @@ export default function DashboardPage() {
             <p className="text-blue-600 text-sm">7-day free trial</p>
           </div>
           <button
-            onClick={handleSubscribe}
+            onClick={async () => {
+              try {
+                const res = await fetch('/api/create-checkout', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({
+                    userId: user?.uid,
+                    userEmail: user?.email,
+                  }),
+                });
+                const data = await res.json();
+                if (data.error) {
+                  alert(data.error);
+                  return;
+                }
+                window.location.href = data.url;
+              } catch (error) {
+                alert('Something went wrong. Please try again.');
+              }
+            }}
             className="w-full bg-purple-600 text-white px-4 py-3 rounded-lg hover:bg-purple-700 transition font-semibold text-lg"
           >
             Start Free Trial
-          </button>
-          <button
-            onClick={refreshSubscription}
-            className="mt-3 text-sm text-blue-600 hover:text-blue-800 block w-full"
-          >
-            Already subscribed? Click here to refresh
           </button>
           <p className="text-gray-400 text-sm mt-4">No credit card required to try</p>
           <button
@@ -166,7 +113,7 @@ export default function DashboardPage() {
     );
   }
 
-  // ✅ SUBSCRIBED — Show calculator
+  // ✅ UNLOCKED — Show calculator
   return (
     <div>
       <div className="bg-white border-b border-gray-200 p-4 flex justify-between items-center max-w-5xl mx-auto">
