@@ -1,31 +1,19 @@
 import { NextResponse } from 'next/server';
-import { adminDb } from '../../lib/firebase-admin';
+
+// 🔑 MANUAL SUBSCRIPTION CONTROL
+// Change this to true to UNLOCK the calculator
+// Change this to false to LOCK the calculator
+const SUBSCRIPTION_STATUS = false; // <-- Change this
 
 export async function POST(request: Request) {
   try {
     const { customerId } = await request.json();
+    console.log('🔍 Subscription check for user:', customerId);
+    console.log('📦 Returning:', SUBSCRIPTION_STATUS);
     
-    console.log('🔍 Checking subscription for user:', customerId);
-
-    if (!customerId) {
-      return NextResponse.json({ subscribed: false });
-    }
-
-    // Read subscription status from Firebase using Admin SDK
-    const userDoc = await adminDb.collection('users').doc(customerId).get();
-    
-    if (!userDoc.exists) {
-      console.log('❌ User not found in Firebase:', customerId);
-      return NextResponse.json({ subscribed: false });
-    }
-
-    const userData = userDoc.data();
-    const isSubscribed = userData?.subscribed === true;
-    
-    console.log(`✅ Subscription status: ${isSubscribed ? 'ACTIVE' : 'INACTIVE'}`);
-    return NextResponse.json({ subscribed: isSubscribed });
+    return NextResponse.json({ subscribed: SUBSCRIPTION_STATUS });
   } catch (error: any) {
-    console.error('❌ Error checking subscription:', error.message);
+    console.error('Error:', error.message);
     return NextResponse.json({ subscribed: false });
   }
 }
