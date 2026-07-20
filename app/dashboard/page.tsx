@@ -1,185 +1,122 @@
-'use client';
+// app/dashboard/page.tsx
+"use client";
 
-import { useEffect, useState } from 'react';
-import { onAuthStateChanged, signInWithPopup, GoogleAuthProvider, signOut } from 'firebase/auth';
-import { auth } from '../lib/firebase';
-import DealFlowDashboard from '../components/DealFlowDashboard';
+import { useEffect, useState } from "react";
+import { onAuthStateChanged, User } from "firebase/auth";
+import { auth } from "@/app/lib/firebase";
+import DealFlowDashboard from "@/app/components/DealFlowDashboard";
+
+type Status = "loading" | "signed-out" | "locked" | "unlocked";
 
 export default function DashboardPage() {
-  const [user, setUser] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
-  const [isSubscribed, setIsSubscribed] = useState(false);
-  const [checking, setChecking] = useState(false);
+  const [status, setStatus] = useState<Status>("loading");
+  const [user, setUser] = useState<User | null>(null);
+  const [checkoutLoading, setCheckoutLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
+  // 1. Wait for Firebase auth, then verify subscription on the SERVER.
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
-      setUser(firebaseUser);
-      if (firebaseUser) {
-        await checkSubscription(firebaseUser.uid);
-      } else {
-        setLoading(false);
-      }
-    });
-    return () => unsubscribe();
-  }, []);
-
-  const checkSubscription = async (userId: string) => {
-    setChecking(true);
-    try {
-      const res = await fetch('/api/check-subscription', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ customerId: userId }),
-      });
-      const data = await res.json();
-      setIsSubscribed(data.subscribed === true);
-    } catch (error) {
-      console.error('Error checking subscription:', error);
-      setIsSubscribed(false);
-    } finally {
-      setLoading(false);
-      setChecking(false);
-    }
-  };
-
-  const handleSignIn = async () => {
-    try {
-      await signInWithPopup(auth, new GoogleAuthProvider());
-    } catch (error) {
-      console.error('Sign-in failed:', error);
-    }
-  };
-
-  const handleSignOut = async () => {
-    try {
-      await signOut(auth);
-    } catch (error) {
-      console.error('Sign-out failed:', error);
-    }
-  };
-
-  const handleSubscribe = async () => {
-    try {
-      const response = await fetch('/api/create-checkout', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          userId: user?.uid,
-          userEmail: user?.email,
-        }),
-      });
-      const data = await response.json();
-      if (data.error) {
-        alert(data.error);
+    const unsub = onAuthStateChanged(auth, async (firebaseUser) => {
+      if (!firebaseUser) {
+        setStatus("signed-out");
         return;
       }
-      window.location.href = data.url;
-    } catch (error) {
-      console.error('Error:', error);
-      alert('Something went wrong. Please try again.');
-    }
-  };
+      setUser(firebaseUser);
 
-  const refreshSubscription = async () => {
-    if (user) {
-      setChecking(true);
       try {
-        const res = await fetch('/api/check-subscription', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ customerId: user.uid }),
+        const token = await firebaseUser.getIdToken();
+        const res = await fetch("/api/check-subscription", {
+          method: "POST",
+          headers: { Authorization: `Bearer ${token}` },
         });
         const data = await res.json();
-        setIsSubscribed(data.subscribed === true);
-      } catch (error) {
-        console.error('Error refreshing:', error);
-        setIsSubscribed(false);
+        setStatus(data.subscribed ? "unlocked" : "locked");
+      } catch {
+        // If the check fails, fail CLOSED — never show the calculator.
+        setStatus("locked");
+        setError("Could not verify your subscription. Please refresh.");
       }
-      setChecking(false);
-    }
-  };
+    });
+    return () => unsub();
+  }, []);
 
-  if (loading || checking) {
+  // 2. Start Stripe checkout.
+  async function handleSubscribe() {
+    if (!user) return;
+    setCheckoutLoading(true);
+    setError(null);
+    try {
+      const token = await user.getIdToken();
+      const res = await fetch("/api/create-checkout", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = await res.json();
+      if (data.url) {
+        window.location.href = data.url; // → Stripe Checkout
+      } else {
+        throw new Error(data.error || "No checkout URL returned");
+      }
+    } catch (e) {
+      setError("Could not start checkout. Please try again.");
+      setCheckoutLoading(false);
+    }
+  }
+
+  // ---- Render states ----
+
+  if (status === "loading") {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <p className="text-gray-500">Loading...</p>
+      <div className="flex min-h-screen items-center justify-center">
+        <p className="text-gray-500">Checking your account…</p>
       </div>
     );
   }
 
-  if (!user) {
+  if (status === "signed-out") {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
-        <div className="bg-white rounded-2xl shadow-xl max-w-md w-full p-8 text-center">
-          <div className="text-5xl mb-4">🏠</div>
-          <h1 className="text-2xl font-bold text-gray-800 mb-2">DealFlow</h1>
-          <p className="text-gray-600 mb-6">Sign in to access the calculator</p>
-          <button
-            onClick={handleSignIn}
-            className="w-full bg-blue-600 text-white px-4 py-3 rounded-lg hover:bg-blue-700 transition font-semibold"
+      <div className="flex min-h-screen items-center justify-center">
+        <div className="text-center">
+          <h1 className="text-2xl font-semibold">Sign in required</h1>
+          <p className="mt-2 text-gray-500">
+            Please sign in to access your dashboard.
+          </p>
+          <a
+            href="/"
+            className="mt-6 inline-block rounded-lg bg-black px-6 py-3 text-white"
           >
-            Sign in with Google
-          </button>
+            Go to sign in
+          </a>
         </div>
       </div>
     );
   }
 
-  // 🔒 LOCKED — MUST SUBSCRIBE
-  if (!isSubscribed) {
+  if (status === "locked") {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
-        <div className="bg-white rounded-2xl shadow-xl max-w-lg w-full p-8 text-center">
-          <div className="text-6xl mb-4">🔒</div>
-          <h1 className="text-2xl font-bold text-gray-800 mb-2">Subscribe to Unlock</h1>
-          <p className="text-gray-600 mb-4">
-            You must subscribe to access the calculator.
-          </p>
-          <div className="bg-blue-50 rounded-lg p-4 mb-6">
-            <p className="text-blue-700 font-semibold text-lg">$49/month</p>
-            <p className="text-blue-600 text-sm">7-day free trial</p>
+      <div className="flex min-h-screen items-center justify-center bg-gray-50 px-4">
+        <div className="w-full max-w-md rounded-2xl bg-white p-8 text-center shadow-lg">
+          <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-gray-100 text-3xl">
+            🔒
           </div>
+          <h1 className="text-2xl font-bold">Start Your Free Trial</h1>
+          <p className="mt-3 text-gray-600">
+            Try the DealFlow Calculator free for 7 days, then $49/mo. Cancel
+            anytime during the trial and you won't be charged.
+          </p>
           <button
             onClick={handleSubscribe}
-            className="w-full bg-purple-600 text-white px-4 py-3 rounded-lg hover:bg-purple-700 transition font-semibold text-lg"
+            disabled={checkoutLoading}
+            className="mt-6 w-full rounded-lg bg-black px-6 py-3 font-medium text-white transition hover:bg-gray-800 disabled:opacity-50"
           >
-            Start Free Trial
+            {checkoutLoading ? "Redirecting to checkout…" : "Start 7-Day Free Trial"}
           </button>
-          <button
-            onClick={refreshSubscription}
-            className="mt-3 text-sm text-blue-600 hover:text-blue-800 block w-full"
-          >
-            Already subscribed? Click here to refresh
-          </button>
-          <p className="text-gray-400 text-sm mt-4">No credit card required to try</p>
-          <button
-            onClick={handleSignOut}
-            className="mt-4 text-sm text-gray-500 hover:text-gray-700"
-          >
-            Sign out
-          </button>
+          {error && <p className="mt-4 text-sm text-red-600">{error}</p>}
         </div>
       </div>
     );
   }
 
-  // ✅ SUBSCRIBED — Show calculator
-  return (
-    <div>
-      <div className="bg-white border-b border-gray-200 p-4 flex justify-between items-center max-w-5xl mx-auto">
-        <div>
-          <span className="font-semibold text-gray-800">DealFlow</span>
-          <span className="text-sm text-green-600 ml-3">✅ Subscribed</span>
-          <span className="text-sm text-gray-500 ml-3">{user.email}</span>
-        </div>
-        <button
-          onClick={handleSignOut}
-          className="text-sm text-gray-600 hover:text-gray-800 bg-gray-100 px-3 py-1.5 rounded-lg"
-        >
-          Sign out
-        </button>
-      </div>
-      <DealFlowDashboard />
-    </div>
-  );
+  // status === "unlocked" — subscriber sees the real dashboard/calculator.
+  return <DealFlowDashboard />;
 }

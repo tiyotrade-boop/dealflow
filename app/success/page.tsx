@@ -1,100 +1,193 @@
-'use client';
+// app/success/page.tsx
+"use client";
 
-import { Suspense, useEffect, useState } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
-import { doc, setDoc } from 'firebase/firestore';
-import { db } from '../lib/firebase';
-import Link from 'next/link';
+import { Suspense, useEffect, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 
 function SuccessContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [status, setStatus] = useState<'saving' | 'saved' | 'error'>('saving');
-  const [errorMsg, setErrorMsg] = useState('');
+  const [state, setState] = useState<"verifying" | "done" | "failed">(
+    "verifying"
+  );
 
   useEffect(() => {
-    const saveSubscription = async () => {
+    const sessionId = searchParams.get("session_id");
+
+    if (!sessionId) {
+      setState("failed");
+      return;
+    }
+
+    (async () => {
       try {
-        const userId = searchParams.get('user_id');
-        
-        if (!userId) {
-          setStatus('error');
-          setErrorMsg('No user ID found');
-          return;
+        // Server confirms payment with Stripe, then saves subscribed: true
+        // to users/{uid} in Firestore.
+        const res = await fetch("/api/verify-session", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ sessionId }),
+        });
+        const data = await res.json();
+
+        if (data.success) {
+          setState("done");
+          // Small pause so the user sees the confirmation, then → dashboard.
+          setTimeout(() => router.replace("/dashboard"), 1500);
+        } else {
+          setState("failed");
         }
-
-        // Save subscription status to Firebase
-        await setDoc(doc(db, 'users', userId), {
-          subscribed: true,
-          subscribedAt: new Date().toISOString(),
-        }, { merge: true });
-
-        setStatus('saved');
-        
-        // Redirect to dashboard after 2 seconds
-        setTimeout(() => {
-          router.push('/dashboard');
-        }, 2000);
-      } catch (err: any) {
-        console.error('❌ Error saving subscription:', err);
-        setStatus('error');
-        setErrorMsg(err.message || 'Failed to save subscription');
+      } catch {
+        setState("failed");
       }
-    };
-
-    saveSubscription();
-  }, [router, searchParams]);
-
-  if (status === 'saving') {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="text-center">
-          <div className="text-4xl mb-4">⏳</div>
-          <p className="text-gray-600">Activating your subscription...</p>
-          <div className="mt-4 w-48 h-1 bg-gray-200 rounded-full overflow-hidden">
-            <div className="w-full h-full bg-blue-600 animate-pulse"></div>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  if (status === 'error') {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
-        <div className="bg-white rounded-2xl shadow-xl max-w-md w-full p-8 text-center">
-          <div className="text-5xl mb-4">❌</div>
-          <h1 className="text-xl font-bold text-gray-800 mb-2">Something went wrong</h1>
-          <p className="text-gray-600 mb-6">{errorMsg || 'Could not activate subscription'}</p>
-          <Link href="/dashboard" className="inline-block bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition">
-            Go to Dashboard
-          </Link>
-        </div>
-      </div>
-    );
-  }
+    })();
+  }, [searchParams, router]);
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
-      <div className="bg-white rounded-2xl shadow-xl max-w-md w-full p-8 text-center">
-        <div className="text-6xl mb-4">🎉</div>
-        <h1 className="text-2xl font-bold text-gray-800 mb-2">Payment Successful!</h1>
-        <p className="text-gray-600 mb-6">
-          Thank you for subscribing to DealFlow Pro!
-          <br />
-          <span className="text-sm text-gray-400">Redirecting to dashboard...</span>
-        </p>
-        <div className="w-full h-1 bg-gray-200 rounded-full overflow-hidden">
-          <div className="w-full h-full bg-green-500 animate-pulse"></div>
-        </div>
+    <div className="flex min-h-screen items-center justify-center bg-gray-50 px-4">
+      <div className="w-full max-w-md rounded-2xl bg-white p-8 text-center shadow-lg">
+        {state === "verifying" && (
+          <>
+            <h1 className="text-2xl font-bold">Confirming your payment…</h1>
+            <p className="mt-3 text-gray-600">
+              One moment while we activate your subscription.
+            </p>
+          </>
+        )}
+
+        {state === "done" && (
+          <>
+            <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-green-100 text-3xl">
+              ✅
+            </div>
+            <h1 className="text-2xl font-bold">Your free trial has started!</h1>
+            <p className="mt-3 text-gray-600">
+              Taking you to your calculator…
+            </p>
+          </>
+        )}
+
+        {state === "failed" && (
+          <>
+            <h1 className="text-2xl font-bold">We couldn't confirm payment</h1>
+            <p className="mt-3 text-gray-600">
+              If you were charged, your access will activate shortly — try
+              opening the dashboard. Otherwise, please try subscribing again.
+            </p>
+            <button
+              onClick={() => router.replace("/dashboard")}
+              className="mt-6 w-full rounded-lg bg-black px-6 py-3 font-medium text-white hover:bg-gray-800"
+            >
+              Go to dashboard
+            </button>
+          </>
+        )}
       </div>
     </div>
   );
 }
 
 export default function SuccessPage() {
+  // useSearchParams requires a Suspense boundary in Next.js 14.
   return (
-    <Suspense fallback={<div className="min-h-screen flex items-center justify-center"><p className="text-gray-500">Loading...</p></div>}>
+    <Suspense fallback={null}>
+      <SuccessContent />
+    </Suspense>
+  );
+}
+// app/success/page.tsx
+"use client";
+
+import { Suspense, useEffect, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+
+function SuccessContent() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const [state, setState] = useState<"verifying" | "done" | "failed">(
+    "verifying"
+  );
+
+  useEffect(() => {
+    const sessionId = searchParams.get("session_id");
+
+    if (!sessionId) {
+      setState("failed");
+      return;
+    }
+
+    (async () => {
+      try {
+        // Server confirms payment with Stripe, then saves subscribed: true
+        // to users/{uid} in Firestore.
+        const res = await fetch("/api/verify-session", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ sessionId }),
+        });
+        const data = await res.json();
+
+        if (data.success) {
+          setState("done");
+          // Small pause so the user sees the confirmation, then → dashboard.
+          setTimeout(() => router.replace("/dashboard"), 1500);
+        } else {
+          setState("failed");
+        }
+      } catch {
+        setState("failed");
+      }
+    })();
+  }, [searchParams, router]);
+
+  return (
+    <div className="flex min-h-screen items-center justify-center bg-gray-50 px-4">
+      <div className="w-full max-w-md rounded-2xl bg-white p-8 text-center shadow-lg">
+        {state === "verifying" && (
+          <>
+            <h1 className="text-2xl font-bold">Confirming your payment…</h1>
+            <p className="mt-3 text-gray-600">
+              One moment while we activate your subscription.
+            </p>
+          </>
+        )}
+
+        {state === "done" && (
+          <>
+            <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-green-100 text-3xl">
+              ✅
+            </div>
+            <h1 className="text-2xl font-bold">Your free trial has started!</h1>
+            <p className="mt-3 text-gray-600">
+              Taking you to your calculator…
+            </p>
+          </>
+        )}
+
+        {state === "failed" && (
+          <>
+            <h1 className="text-2xl font-bold">We couldn't confirm payment</h1>
+            <p className="mt-3 text-gray-600">
+              If you were charged, your access will activate shortly — try
+              opening the dashboard. Otherwise, please try subscribing again.
+            </p>
+            <button
+              onClick={() => router.replace("/dashboard")}
+              className="mt-6 w-full rounded-lg bg-black px-6 py-3 font-medium text-white hover:bg-gray-800"
+            >
+              Go to dashboard
+            </button>
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
+
+export default function SuccessPage() {
+  // useSearchParams requires a Suspense boundary in Next.js 14.
+  return (
+    <Suspense fallback={null}>
       <SuccessContent />
     </Suspense>
   );
