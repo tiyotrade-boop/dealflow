@@ -3,8 +3,8 @@
 
 import { useEffect, useState } from "react";
 import { onAuthStateChanged, User } from "firebase/auth";
-import { auth } from "@/app/lib/firebase";
-import DealFlowDashboard from "@/app/components/DealFlowDashboard";
+import { auth } from "../lib/firebase";
+import DealFlowDashboard from "../components/DealFlowDashboard";
 
 type Status = "loading" | "signed-out" | "locked" | "unlocked";
 
