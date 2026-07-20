@@ -68,7 +68,7 @@ export default function Home() {
               See the Calculator
             </Link>
           </div>
-          <p className="text-blue-200 text-sm mt-4">✅ No credit card required</p>
+          <p className="text-blue-200 text-sm mt-4">✅ 7-day free trial · Cancel anytime</p>
         </div>
 
         {/* Calculator Preview */}
@@ -123,7 +123,7 @@ export default function Home() {
             >
               Try It Free →
             </Link>
-            <p className="text-gray-400 text-sm mt-2">7-day free trial. No credit card required.</p>
+            <p className="text-gray-400 text-sm mt-2">7-day free trial. Cancel anytime, no charge.</p>
           </div>
         </div>
 
@@ -204,7 +204,7 @@ export default function Home() {
           >
             🚀 Start Your Free 7-Day Trial
           </Link>
-          <p className="text-blue-200 text-sm mt-4">No credit card required. Cancel anytime.</p>
+          <p className="text-blue-200 text-sm mt-4">Free for 7 days, then $49/mo. Cancel anytime before your trial ends and you won't be charged.</p>
         </div>
       </section>
     </div>
