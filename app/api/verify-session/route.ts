@@ -1,19 +1,20 @@
 // app/api/verify-session/route.ts
-// Called by the /success page. Confirms with STRIPE (not the browser) that the
-// checkout session was actually paid, then writes subscribed: true to
-// users/{uid} using the Admin SDK.
+// Confirms with Stripe that a checkout session was paid (or is a valid trial),
+// then writes subscribed: true to users/{uid} via the Admin SDK.
 //
-// Why this route exists: if the /success page wrote subscribed:true directly
-// from the client, anyone could open /success and unlock the app for free.
-// Here, the "subscribed" flag is only ever written after Stripe confirms payment.
+// Requires firebase-admin for the Firestore write. To make it bundle correctly
+// on Vercel, this route runs on the Node runtime AND next.config.js lists
+// firebase-admin under serverComponentsExternalPackages.
+//
+// Required env vars:
+//   STRIPE_SECRET_KEY
+//   FIREBASE_PROJECT_ID, FIREBASE_CLIENT_EMAIL, FIREBASE_PRIVATE_KEY
 
 import { NextRequest, NextResponse } from "next/server";
 import Stripe from "stripe";
 import { adminDb } from "../../lib/firebase-admin";
 
 export const runtime = "nodejs";
-
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
 
 export async function POST(req: NextRequest) {
   try {
@@ -23,12 +24,21 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Missing session_id" }, { status: 400 });
     }
 
+    if (!process.env.STRIPE_SECRET_KEY) {
+      console.error("STRIPE_SECRET_KEY is not set");
+      return NextResponse.json(
+        { success: false, error: "Server missing STRIPE_SECRET_KEY" },
+        { status: 500 }
+      );
+    }
+
+    const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+
     // 1. Ask Stripe directly about this session — cannot be faked by a client.
     const session = await stripe.checkout.sessions.retrieve(sessionId);
 
     // With a 7-day trial, no charge happens at checkout, so Stripe reports
-    // payment_status "no_payment_required" (card saved, subscription trialing).
-    // "paid" covers non-trial checkouts. Either way, status must be "complete".
+    // payment_status "no_payment_required". "paid" covers non-trial checkouts.
     const validPayment =
       session.status === "complete" &&
       (session.payment_status === "paid" ||
@@ -43,7 +53,7 @@ export async function POST(req: NextRequest) {
     }
 
     // 2. Payment confirmed → mark the user as subscribed in Firestore.
-    await adminDb.doc(`users/${uid}`).set(
+    await adminDb().doc(`users/${uid}`).set(
       {
         subscribed: true,
         stripeCustomerId: session.customer ?? null,
