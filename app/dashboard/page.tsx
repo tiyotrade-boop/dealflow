@@ -5,9 +5,6 @@ import { useEffect, useState } from "react";
 import { onAuthStateChanged, User } from "firebase/auth";
 import { auth } from "../lib/firebase";
 import DealFlowDashboard from "../components/DealFlowDashboard";
-
-type Status = "loading" | "signed-out" | "locked" | "unlocked";
-
 export default function DashboardPage() {
   const [status, setStatus] = useState<Status>("loading");
   const [user, setUser] = useState<User | null>(null);
