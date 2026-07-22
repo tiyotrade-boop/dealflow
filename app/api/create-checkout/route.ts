@@ -7,9 +7,11 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import Stripe from "stripe";
-import { adminAuth } from "../../lib/firebase-admin";
+import { adminAuth } from "@/app/lib/firebase-admin";
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
+function stripe() {
+  return new Stripe(process.env.STRIPE_SECRET_KEY!);
+}
 
 export async function POST(req: NextRequest) {
   try {
@@ -23,12 +25,12 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Not signed in" }, { status: 401 });
     }
 
-    const decoded = await adminAuth.verifyIdToken(token);
+    const decoded = await adminAuth().verifyIdToken(token);
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL!;
 
     // 2. Create the checkout session. client_reference_id carries the uid
     //    so /api/verify-session knows exactly which user paid.
-    const session = await stripe.checkout.sessions.create({
+    const session = await stripe().checkout.sessions.create({
       mode: "subscription",
       client_reference_id: decoded.uid,
       customer_email: decoded.email ?? undefined,
