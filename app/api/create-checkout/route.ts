@@ -5,9 +5,10 @@
 //   STRIPE_PRICE_ID=price_...     (your subscription price)
 //   NEXT_PUBLIC_APP_URL=https://yourapp.com  (or http://localhost:3000 in dev)
 
-import { NextRequest, NextResponse } from "next/server";
-import Stripe from "stripe";
-import { adminAuth } from "../../lib/firebase-admin";
+import { NextResponse } from 'next/server';
+import Stripe from 'stripe';
+
+export const runtime = "nodejs";
 
 function stripe() {
   return new Stripe(process.env.STRIPE_SECRET_KEY!);
