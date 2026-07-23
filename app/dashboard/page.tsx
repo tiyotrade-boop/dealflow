@@ -2,13 +2,17 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { onAuthStateChanged, User } from "firebase/auth";
-import { auth } from "../lib/firebase";
+import { onAuthStateChanged, signInWithPopup, User } from "firebase/auth";
+import { auth, googleProvider } from "../lib/firebase";
 import DealFlowDashboard from "../components/DealFlowDashboard";
+
+type Status = "loading" | "signed-out" | "locked" | "unlocked";
+
 export default function DashboardPage() {
   const [status, setStatus] = useState<Status>("loading");
   const [user, setUser] = useState<User | null>(null);
   const [checkoutLoading, setCheckoutLoading] = useState(false);
+  const [signingIn, setSigningIn] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   // 1. Wait for Firebase auth, then verify subscription on the SERVER.
@@ -37,7 +41,27 @@ export default function DashboardPage() {
     return () => unsub();
   }, []);
 
-  // 2. Start Stripe checkout.
+  // 2. Sign in with Google.
+  async function handleSignIn() {
+    setSigningIn(true);
+    setError(null);
+    try {
+      await signInWithPopup(auth, googleProvider);
+      // onAuthStateChanged above picks it up and runs the subscription check.
+    } catch (e: any) {
+      console.error("Sign-in failed:", e);
+      if (e?.code === "auth/popup-blocked") {
+        setError("Your browser blocked the sign-in popup. Allow popups and try again.");
+      } else if (e?.code === "auth/popup-closed-by-user") {
+        setError(null); // user cancelled — not an error worth showing
+      } else {
+        setError("Sign-in failed. Please try again.");
+      }
+      setSigningIn(false);
+    }
+  }
+
+  // 3. Start Stripe checkout.
   async function handleSubscribe() {
     if (!user) return;
     setCheckoutLoading(true);
@@ -72,18 +96,20 @@ export default function DashboardPage() {
 
   if (status === "signed-out") {
     return (
-      <div className="flex min-h-screen items-center justify-center">
-        <div className="text-center">
-          <h1 className="text-2xl font-semibold">Sign in required</h1>
-          <p className="mt-2 text-gray-500">
-            Please sign in to access your dashboard.
+      <div className="flex min-h-screen items-center justify-center bg-gray-50 px-4">
+        <div className="w-full max-w-md rounded-2xl bg-white p-8 text-center shadow-lg">
+          <h1 className="text-2xl font-bold">Sign in to DealFlow</h1>
+          <p className="mt-3 text-gray-600">
+            Sign in to access your calculator and saved deals.
           </p>
-          <a
-            href="/"
-            className="mt-6 inline-block rounded-lg bg-black px-6 py-3 text-white"
+          <button
+            onClick={handleSignIn}
+            disabled={signingIn}
+            className="mt-6 w-full rounded-lg bg-black px-6 py-3 font-medium text-white transition hover:bg-gray-800 disabled:opacity-50"
           >
-            Go to sign in
-          </a>
+            {signingIn ? "Opening sign-in…" : "Sign in with Google"}
+          </button>
+          {error && <p className="mt-4 text-sm text-red-600">{error}</p>}
         </div>
       </div>
     );
@@ -109,6 +135,12 @@ export default function DashboardPage() {
             {checkoutLoading ? "Redirecting to checkout…" : "Start 7-Day Free Trial"}
           </button>
           {error && <p className="mt-4 text-sm text-red-600">{error}</p>}
+          <button
+            onClick={() => auth.signOut()}
+            className="mt-4 text-sm text-gray-400 underline"
+          >
+            Sign out
+          </button>
         </div>
       </div>
     );
