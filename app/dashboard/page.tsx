@@ -98,7 +98,7 @@ export default function DashboardPage() {
     return (
       <div className="flex min-h-screen items-center justify-center bg-gray-50 px-4">
         <div className="w-full max-w-md rounded-2xl bg-white p-8 text-center shadow-lg">
-          <h1 className="text-2xl font-bold">Sign in to DealFlow</h1>
+          <h1 className="text-2xl font-bold">Sign in to DealAnalytic</h1>
           <p className="mt-3 text-gray-600">
             Sign in to access your calculator and saved deals.
           </p>
@@ -124,7 +124,7 @@ export default function DashboardPage() {
           </div>
           <h1 className="text-2xl font-bold">Start Your Free Trial</h1>
           <p className="mt-3 text-gray-600">
-            Try the DealFlow Calculator free for 7 days, then $49/mo. Cancel
+            Try the DealAnalytic Calculator free for 7 days, then $49/mo. Cancel
             anytime during the trial and you won't be charged.
           </p>
           <button

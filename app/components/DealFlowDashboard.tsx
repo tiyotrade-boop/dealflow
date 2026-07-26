@@ -149,28 +149,6 @@ export default function DealFlowDashboard() {
     }
   };
 
-  const handleSubscribe = async () => {
-    try {
-      const response = await fetch('/api/create-checkout', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          userId: user?.uid,
-          userEmail: user?.email,
-        }),
-      });
-      const data = await response.json();
-      if (data.error) {
-        alert(data.error);
-        return;
-      }
-      window.location.href = data.url;
-    } catch (error) {
-      console.error('Error:', error);
-      alert('Something went wrong. Please try again.');
-    }
-  };
-
   const formatCurrency = (value: number) =>
     new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(
       value || 0
@@ -198,13 +176,6 @@ export default function DealFlowDashboard() {
           className="rounded-lg bg-green-600 px-6 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-green-700 disabled:cursor-not-allowed disabled:bg-gray-300"
         >
           {saving ? 'Saving…' : '💾 Save Deal'}
-        </button>
-
-        <button
-          onClick={handleSubscribe}
-          className="rounded-lg bg-purple-600 px-6 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-purple-700"
-        >
-          💳 Subscribe ($49/mo)
         </button>
       </div>
 

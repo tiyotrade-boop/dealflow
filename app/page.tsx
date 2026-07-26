@@ -129,13 +129,13 @@ export default function Home() {
 
         {/* Comparison Table */}
         <div className="bg-white rounded-xl shadow-lg p-8 mb-8">
-          <h2 className="text-2xl font-bold text-gray-800 mb-6">Why Agents Choose DealFlow</h2>
+          <h2 className="text-2xl font-bold text-gray-800 mb-6">Why Investors Choose DealAnalytic</h2>
           <div className="overflow-x-auto">
             <table className="w-full text-left">
               <thead>
                 <tr className="border-b">
                   <th className="py-3 px-4 font-semibold text-gray-600">Feature</th>
-                  <th className="py-3 px-4 font-semibold text-green-600">DealFlow</th>
+                  <th className="py-3 px-4 font-semibold text-green-600">DealAnalytic</th>
                   <th className="py-3 px-4 font-semibold text-red-500">Competitors</th>
                 </tr>
               </thead>
@@ -175,7 +175,7 @@ export default function Home() {
 
         {/* Testimonials */}
         <div className="bg-white rounded-xl shadow-lg p-8 mb-8">
-          <h2 className="text-2xl font-bold text-gray-800 mb-6">🏠 What Agents Are Saying</h2>
+          <h2 className="text-2xl font-bold text-gray-800 mb-6">🏠 What Investors Are Saying</h2>
           {loading ? (
             <p className="text-gray-500">Loading reviews...</p>
           ) : testimonials.length === 0 ? (
@@ -192,7 +192,6 @@ export default function Home() {
               ))}
             </div>
           )}
-          <p className="text-gray-500 text-sm mt-4">⭐ Join 500+ agents already using DealFlow</p>
         </div>
 
         {/* CTA */}
