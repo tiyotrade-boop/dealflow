@@ -8,7 +8,7 @@
 // Required env vars:
 //   STRIPE_SECRET_KEY            = sk_test_... (or sk_live_...)
 //   STRIPE_PRICE_ID             = price_...
-//   NEXT_PUBLIC_APP_URL         = https://dealflowapp.app
+//   NEXT_PUBLIC_APP_URL         = https://dealanalytic.com
 //   NEXT_PUBLIC_FIREBASE_API_KEY = (your Firebase web API key — already set for the client)
 
 import { NextRequest, NextResponse } from "next/server";
