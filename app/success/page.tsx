@@ -1,8 +1,10 @@
-// app/success/page.tsx
 "use client";
 
 import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { onAuthStateChanged } from "firebase/auth";
+import { auth } from "../lib/firebase";
+import { welcomeEmail } from "../lib/email-templates";
 
 function SuccessContent() {
   const router = useRouter();
@@ -21,8 +23,7 @@ function SuccessContent() {
 
     (async () => {
       try {
-        // Server confirms payment with Stripe, then saves subscribed: true
-        // to users/{uid} in Firestore.
+        // 1. Verify payment with Stripe
         const res = await fetch("/api/verify-session", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -31,8 +32,28 @@ function SuccessContent() {
         const data = await res.json();
 
         if (data.success) {
+          // 2. Get current user
+          const user = auth.currentUser;
+          const userEmail = user?.email || "";
+          const userName = user?.displayName || "there";
+
+          // 3. Send welcome email
+          try {
+            await fetch("/api/send-email", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                to: userEmail,
+                subject: "Welcome to DealAnalytic! 🏠",
+                html: welcomeEmail(userName).html,
+              }),
+            });
+          } catch (emailError) {
+            console.error("Email sending failed:", emailError);
+            // Don't block the user — email failure shouldn't break the flow
+          }
+
           setState("done");
-          // Small pause so the user sees the confirmation, then → dashboard.
           setTimeout(() => router.replace("/dashboard"), 1500);
         } else {
           setState("failed");

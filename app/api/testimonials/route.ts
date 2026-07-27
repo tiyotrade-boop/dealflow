@@ -4,11 +4,6 @@ import { db } from '../../lib/firebase';
 
 export async function GET() {
   try {
-    if (!db) {
-      console.error('Firestore db is not initialized');
-      return NextResponse.json([]);
-    }
-
     const q = query(
       collection(db, 'testimonials'),
       where('approved', '==', true),
