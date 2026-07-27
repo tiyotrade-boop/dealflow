@@ -50,7 +50,25 @@ export default function RootLayout({
             </nav>
           </div>
         </header>
+
         {children}
+
+        <footer className="bg-gray-50 border-t border-gray-200 py-8 mt-12">
+          <div className="max-w-6xl mx-auto px-4 flex flex-col sm:flex-row justify-between items-center gap-4 text-sm text-gray-600">
+            <div className="flex gap-6">
+              <Link href="/contact" className="hover:text-blue-600 transition">
+                Contact
+              </Link>
+              <Link href="/privacy" className="hover:text-blue-600 transition">
+                Privacy
+              </Link>
+              <Link href="/terms" className="hover:text-blue-600 transition">
+                Terms
+              </Link>
+            </div>
+            <p>&copy; {new Date().getFullYear()} DealAnalytic. All rights reserved.</p>
+          </div>
+        </footer>
       </body>
     </html>
   );
