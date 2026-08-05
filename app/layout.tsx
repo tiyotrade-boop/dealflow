@@ -3,7 +3,7 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import Script from "next/script";
 import { Analytics } from '@vercel/analytics/react';
-import Header from "./components/Header"; // ← Import Header
+import Header from "./components/Header";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -23,7 +23,6 @@ export default function RootLayout({
   return (
     <html lang="en">
       <head>
-        {/* Google Ads Tag */}
         <Script
           strategy="afterInteractive"
           src="https://www.googletagmanager.com/gtag/js?id=AW-18367676947"
@@ -41,7 +40,6 @@ export default function RootLayout({
           }}
         />
 
-        {/* Google Analytics */}
         <Script
           strategy="afterInteractive"
           src="https://www.googletagmanager.com/gtag/js?id=G-Y546C77GNF"
@@ -60,7 +58,7 @@ export default function RootLayout({
         />
       </head>
       <body className={inter.className}>
-        <Header /> {/* ← Use Header component */}
+        <Header />
         {children}
         <footer className="bg-gray-50 border-t border-gray-200 py-8 mt-12">
           <div className="max-w-6xl mx-auto px-4 flex flex-col sm:flex-row justify-between items-center gap-4 text-sm text-gray-600">
