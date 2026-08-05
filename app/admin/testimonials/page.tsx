@@ -1,108 +1,152 @@
-"use client";
+'use client';
 
-import { useEffect, useState } from "react";
-import { onAuthStateChanged } from "firebase/auth";
-import { auth, db } from "../../lib/firebase";
-import { collection, query, where, getDocs, updateDoc, doc, deleteDoc } from "firebase/firestore";
-import { useRouter } from "next/navigation";
-import Link from "next/link";
+import { useEffect, useState } from 'react';
+import {
+  collection,
+  addDoc,
+  deleteDoc,
+  doc,
+  onSnapshot,
+  orderBy,
+  query,
+  serverTimestamp,
+} from 'firebase/firestore';
+import { db } from '@/lib/firebase';
+
+interface Testimonial {
+  id: string;
+  name: string;
+  role: string;
+  review: string;
+  rating: number;
+}
 
 export default function AdminTestimonialsPage() {
-  const [user, setUser] = useState<any>(null);
-  const [testimonials, setTestimonials] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
-  const router = useRouter();
+  const [testimonials, setTestimonials] = useState<Testimonial[]>([]);
+  const [name, setName] = useState('');
+  const [role, setRole] = useState('');
+  const [review, setReview] = useState('');
+  const [rating, setRating] = useState(5);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState('');
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
-      if (!firebaseUser) {
-        router.push("/");
-        return;
-      }
-      setUser(firebaseUser);
-      await fetchTestimonials();
-    });
-    return () => unsubscribe();
-  }, [router]);
-
-  const fetchTestimonials = async () => {
-    try {
-      const q = query(
-        collection(db, "testimonials"),
-        where("approved", "==", false)
+    const q = query(collection(db, 'testimonials'), orderBy('createdAt', 'desc'));
+    const unsub = onSnapshot(q, (snap) => {
+      setTestimonials(
+        snap.docs.map((d) => ({ id: d.id, ...d.data() } as Testimonial))
       );
-      const snapshot = await getDocs(q);
-      const results = snapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-      }));
-      setTestimonials(results);
-    } catch (error) {
-      console.error("Error fetching testimonials:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
+    });
+    return () => unsub();
+  }, []);
 
-  const approveTestimonial = async (id: string) => {
+  const handleAdd = async () => {
+    if (!name.trim() || !review.trim()) {
+      setError('Name and review are required.');
+      return;
+    }
+    setSaving(true);
+    setError('');
     try {
-      await updateDoc(doc(db, "testimonials", id), {
-        approved: true,
+      await addDoc(collection(db, 'testimonials'), {
+        name: name.trim(),
+        role: role.trim(),
+        review: review.trim(),
+        rating,
+        createdAt: serverTimestamp(),
       });
-      setTestimonials(testimonials.filter((t) => t.id !== id));
-    } catch (error) {
-      console.error("Error approving testimonial:", error);
+      setName('');
+      setRole('');
+      setReview('');
+      setRating(5);
+    } catch {
+      setError('Failed to save. Try again.');
+    } finally {
+      setSaving(false);
     }
   };
 
-  const deleteTestimonial = async (id: string) => {
-    try {
-      await deleteDoc(doc(db, "testimonials", id));
-      setTestimonials(testimonials.filter((t) => t.id !== id));
-    } catch (error) {
-      console.error("Error deleting testimonial:", error);
-    }
+  const handleDelete = async (id: string) => {
+    if (!confirm('Delete this testimonial?')) return;
+    await deleteDoc(doc(db, 'testimonials', id));
   };
-
-  if (loading) {
-    return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
-  }
 
   return (
-    <div className="max-w-4xl mx-auto p-6">
-      <h1 className="text-2xl font-bold mb-6">Pending Testimonials</h1>
-      {testimonials.length === 0 ? (
-        <p className="text-gray-500">No pending testimonials.</p>
-      ) : (
-        <div className="space-y-4">
-          {testimonials.map((t) => (
-            <div key={t.id} className="bg-white rounded-xl shadow-lg p-6">
-              <p className="text-gray-700 mb-2">"{t.review}"</p>
-              <p className="font-semibold">— {t.name}</p>
-              <p className="text-sm text-gray-500">{t.role}</p>
-              <p className="text-yellow-500">{"⭐".repeat(t.rating)}</p>
-              <div className="mt-4 flex gap-2">
-                <button
-                  onClick={() => approveTestimonial(t.id)}
-                  className="bg-green-600 text-white px-4 py-1 rounded-lg hover:bg-green-700"
-                >
-                  Approve
-                </button>
-                <button
-                  onClick={() => deleteTestimonial(t.id)}
-                  className="bg-red-600 text-white px-4 py-1 rounded-lg hover:bg-red-700"
-                >
-                  Delete
-                </button>
-              </div>
-            </div>
-          ))}
+    <div className="max-w-3xl mx-auto px-4 py-10">
+      <h1 className="text-2xl font-bold text-gray-900 mb-6">
+        Manage Testimonials
+      </h1>
+
+      {/* Add form */}
+      <div className="bg-white rounded-xl shadow p-6 mb-8 space-y-4">
+        <h2 className="text-lg font-semibold text-gray-800">Add Testimonial</h2>
+        {error && <p className="text-red-500 text-sm">{error}</p>}
+        <input
+          className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          placeholder="Name *"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+        />
+        <input
+          className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          placeholder="Role (e.g. Real Estate Investor)"
+          value={role}
+          onChange={(e) => setRole(e.target.value)}
+        />
+        <textarea
+          className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          placeholder="Review *"
+          rows={3}
+          value={review}
+          onChange={(e) => setReview(e.target.value)}
+        />
+        <div className="flex items-center gap-3">
+          <label className="text-sm text-gray-600">Rating:</label>
+          <select
+            className="border border-gray-300 rounded-lg px-3 py-2 text-sm"
+            value={rating}
+            onChange={(e) => setRating(Number(e.target.value))}
+          >
+            {[5, 4, 3, 2, 1].map((r) => (
+              <option key={r} value={r}>
+                {r} star{r !== 1 ? 's' : ''}
+              </option>
+            ))}
+          </select>
         </div>
-      )}
-      <div className="mt-6">
-        <Link href="/dashboard" className="text-blue-600 hover:underline">
-          ← Back to Dashboard
-        </Link>
+        <button
+          onClick={handleAdd}
+          disabled={saving}
+          className="bg-blue-600 text-white px-6 py-2 rounded-lg text-sm font-semibold hover:bg-blue-700 transition disabled:bg-gray-300"
+        >
+          {saving ? 'Saving...' : 'Add Testimonial'}
+        </button>
+      </div>
+
+      {/* List */}
+      <div className="space-y-4">
+        {testimonials.length === 0 && (
+          <p className="text-gray-500 text-sm">No testimonials yet.</p>
+        )}
+        {testimonials.map((t) => (
+          <div
+            key={t.id}
+            className="bg-white rounded-xl shadow p-4 flex justify-between items-start gap-4"
+          >
+            <div>
+              <p className="text-gray-700 text-sm mb-1">&ldquo;{t.review}&rdquo;</p>
+              <p className="font-semibold text-sm text-gray-900">{t.name}</p>
+              <p className="text-xs text-gray-500">{t.role}</p>
+              <p className="text-xs text-yellow-500">{'⭐'.repeat(t.rating)}</p>
+            </div>
+            <button
+              onClick={() => handleDelete(t.id)}
+              className="text-red-500 text-xs border border-red-200 px-3 py-1 rounded-lg hover:bg-red-50 transition shrink-0"
+            >
+              Delete
+            </button>
+          </div>
+        ))}
       </div>
     </div>
   );
