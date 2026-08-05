@@ -1,10 +1,11 @@
-'use client';
+"use client";
 
-import { useEffect, useState } from 'react';
-import { onAuthStateChanged } from 'firebase/auth';
-import { auth, db } from '../../lib/firebase';
-import { collection, query, where, getDocs, updateDoc, doc, deleteDoc } from 'firebase/firestore';
-import { useRouter } from 'next/navigation';
+import { useEffect, useState } from "react";
+import { onAuthStateChanged } from "firebase/auth";
+import { auth, db } from "../../lib/firebase";
+import { collection, query, where, getDocs, updateDoc, doc, deleteDoc } from "firebase/firestore";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
 
 export default function AdminTestimonialsPage() {
   const [user, setUser] = useState<any>(null);
@@ -15,7 +16,7 @@ export default function AdminTestimonialsPage() {
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       if (!firebaseUser) {
-        router.push('/');
+        router.push("/");
         return;
       }
       setUser(firebaseUser);
@@ -27,8 +28,8 @@ export default function AdminTestimonialsPage() {
   const fetchTestimonials = async () => {
     try {
       const q = query(
-        collection(db, 'testimonials'),
-        where('approved', '==', false)
+        collection(db, "testimonials"),
+        where("approved", "==", false)
       );
       const snapshot = await getDocs(q);
       const results = snapshot.docs.map((doc) => ({
@@ -37,7 +38,7 @@ export default function AdminTestimonialsPage() {
       }));
       setTestimonials(results);
     } catch (error) {
-      console.error('Error fetching testimonials:', error);
+      console.error("Error fetching testimonials:", error);
     } finally {
       setLoading(false);
     }
@@ -45,21 +46,21 @@ export default function AdminTestimonialsPage() {
 
   const approveTestimonial = async (id: string) => {
     try {
-      await updateDoc(doc(db, 'testimonials', id), {
+      await updateDoc(doc(db, "testimonials", id), {
         approved: true,
       });
-      setTestimonials(testimonials.filter(t => t.id !== id));
+      setTestimonials(testimonials.filter((t) => t.id !== id));
     } catch (error) {
-      console.error('Error approving testimonial:', error);
+      console.error("Error approving testimonial:", error);
     }
   };
 
   const deleteTestimonial = async (id: string) => {
     try {
-      await deleteDoc(doc(db, 'testimonials', id));
-      setTestimonials(testimonials.filter(t => t.id !== id));
+      await deleteDoc(doc(db, "testimonials", id));
+      setTestimonials(testimonials.filter((t) => t.id !== id));
     } catch (error) {
-      console.error('Error deleting testimonial:', error);
+      console.error("Error deleting testimonial:", error);
     }
   };
 
@@ -98,6 +99,11 @@ export default function AdminTestimonialsPage() {
           ))}
         </div>
       )}
+      <div className="mt-6">
+        <Link href="/dashboard" className="text-blue-600 hover:underline">
+          ← Back to Dashboard
+        </Link>
+      </div>
     </div>
   );
 }
