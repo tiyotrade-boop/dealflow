@@ -9,7 +9,8 @@ const nextConfig = {
   typescript: {
     ignoreBuildErrors: true,
   },
-  // Add this to fix the not-found error
+  // Disable static generation for not-found
+  generateStaticParams: false,
   output: 'standalone',
 };
 
