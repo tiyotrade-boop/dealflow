@@ -5,6 +5,7 @@ export async function GET() {
   try {
     const snap = await adminDb()
       .collection('testimonials')
+      .where('status', '==', 'approved')
       .orderBy('createdAt', 'desc')
       .get();
 
@@ -34,6 +35,7 @@ export async function POST(request: Request) {
       role: role || '',
       review,
       rating: rating || 5,
+      status: 'pending',
       createdAt: new Date(),
     });
 

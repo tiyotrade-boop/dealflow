@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import ReviewForm from './components/ReviewForm';
 
 interface Testimonial {
   id: string;
@@ -184,7 +185,7 @@ export default function Home() {
             <div className="grid md:grid-cols-3 gap-6">
               {testimonials.map((t) => (
                 <div key={t.id} className="bg-gray-50 p-6 rounded-lg text-left">
-                  <p className="text-gray-700 mb-3">"{t.review}"</p>
+                  <p className="text-gray-700 mb-3">&ldquo;{t.review}&rdquo;</p>
                   <p className="font-semibold">— {t.name}</p>
                   <p className="text-sm text-gray-500">{t.role}</p>
                   <p className="text-sm text-yellow-500">{renderStars(t.rating)}</p>
@@ -193,6 +194,9 @@ export default function Home() {
             </div>
           )}
         </div>
+
+        {/* Review Form */}
+        <ReviewForm />
 
         {/* CTA */}
         <div className="bg-blue-600 text-white rounded-xl p-8">
@@ -203,7 +207,7 @@ export default function Home() {
           >
             🚀 Start Your Free 7-Day Trial
           </Link>
-          <p className="text-blue-200 text-sm mt-4">Free for 7 days, then $49/mo. Cancel anytime before your trial ends and you won't be charged.</p>
+          <p className="text-blue-200 text-sm mt-4">Free for 7 days, then $49/mo. Cancel anytime before your trial ends and you won&apos;t be charged.</p>
         </div>
       </section>
     </div>
