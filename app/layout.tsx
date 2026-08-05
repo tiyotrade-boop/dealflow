@@ -1,10 +1,9 @@
-// app/layout.tsx
-
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import Link from "next/link";
 import Script from "next/script";
+import { Analytics } from '@vercel/analytics/react'; // ← ADD THIS
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -50,6 +49,7 @@ export default function RootLayout({
         <footer>
           {/* Your existing footer */}
         </footer>
+        <Analytics /> {/* ← ADD THIS */}
       </body>
     </html>
   );
