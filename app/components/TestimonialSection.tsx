@@ -28,6 +28,23 @@ const AVATAR_COLORS = [
   'bg-emerald-600',
 ];
 
+function SkeletonCard() {
+  return (
+    <div className="shrink-0 w-72 bg-gray-50 rounded-xl p-6 border border-gray-100 shadow-sm animate-pulse">
+      <div className="h-4 bg-gray-200 rounded mb-2 w-full" />
+      <div className="h-4 bg-gray-200 rounded mb-2 w-4/5" />
+      <div className="h-4 bg-gray-200 rounded mb-6 w-3/5" />
+      <div className="flex items-center gap-3">
+        <div className="w-10 h-10 rounded-full bg-gray-200 shrink-0" />
+        <div className="flex-1">
+          <div className="h-3 bg-gray-200 rounded mb-2 w-24" />
+          <div className="h-3 bg-gray-200 rounded w-16" />
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function TestimonialSection() {
   const [testimonials, setTestimonials] = useState<Testimonial[]>([]);
   const [loading, setLoading] = useState(true);
@@ -62,7 +79,11 @@ export default function TestimonialSection() {
       </h2>
 
       {loading ? (
-        <p className="text-gray-500 text-center">Loading reviews...</p>
+        <div className="flex gap-4 overflow-hidden px-2">
+          <SkeletonCard />
+          <SkeletonCard />
+          <SkeletonCard />
+        </div>
       ) : testimonials.length === 0 ? (
         <p className="text-gray-500 text-center">No reviews yet. Be the first to leave one!</p>
       ) : (
