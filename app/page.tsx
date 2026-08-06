@@ -1,49 +1,10 @@
 'use client';
 
-import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import TestimonialSection from './components/TestimonialSection';
 import ReviewForm from './components/ReviewForm';
 
-interface Testimonial {
-  id: string;
-  name: string;
-  role: string;
-  review: string;
-  rating: number;
-}
-
 export default function Home() {
-  const [testimonials, setTestimonials] = useState<Testimonial[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const fetchTestimonials = async () => {
-      try {
-        const res = await fetch('/api/testimonials');
-        if (!res.ok) {
-          setTestimonials([]);
-          return;
-        }
-        const data = await res.json();
-        if (Array.isArray(data)) {
-          setTestimonials(data);
-        } else {
-          setTestimonials([]);
-        }
-      } catch (error) {
-        console.error('Failed to load testimonials:', error);
-        setTestimonials([]);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchTestimonials();
-  }, []);
-
-  const renderStars = (rating: number) => {
-    return '⭐'.repeat(rating) + '☆'.repeat(5 - rating);
-  };
-
   return (
     <div className="min-h-screen bg-gray-50">
       <section className="max-w-5xl mx-auto px-4 py-12 text-center">
@@ -74,12 +35,8 @@ export default function Home() {
 
         {/* Calculator Preview */}
         <div className="bg-white rounded-xl shadow-lg p-8 mb-8">
-          <h2 className="text-2xl font-bold text-gray-800 mb-4">
-            🖥️ See What You Get
-          </h2>
-          <p className="text-gray-600 mb-6">
-            Professional flip calculator with instant profit & ROI analysis
-          </p>
+          <h2 className="text-2xl font-bold text-gray-800 mb-4">🖥️ See What You Get</h2>
+          <p className="text-gray-600 mb-6">Professional flip calculator with instant profit & ROI analysis</p>
           <div className="rounded-xl overflow-hidden shadow-md border border-gray-200 bg-gray-100 p-4">
             <div className="bg-white rounded-lg p-4">
               <div className="grid grid-cols-2 gap-4 text-left">
@@ -174,26 +131,8 @@ export default function Home() {
           </div>
         </div>
 
-        {/* Testimonials */}
-        <div className="bg-white rounded-xl shadow-lg p-8 mb-8">
-          <h2 className="text-2xl font-bold text-gray-800 mb-6">🏠 What Investors Are Saying</h2>
-          {loading ? (
-            <p className="text-gray-500">Loading reviews...</p>
-          ) : testimonials.length === 0 ? (
-            <p className="text-gray-500">No reviews yet. Be the first to leave one!</p>
-          ) : (
-            <div className="grid md:grid-cols-3 gap-6">
-              {testimonials.map((t) => (
-                <div key={t.id} className="bg-gray-50 p-6 rounded-lg text-left">
-                  <p className="text-gray-700 mb-3">&ldquo;{t.review}&rdquo;</p>
-                  <p className="font-semibold">— {t.name}</p>
-                  <p className="text-sm text-gray-500">{t.role}</p>
-                  <p className="text-sm text-yellow-500">{renderStars(t.rating)}</p>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
+        {/* Testimonials - alternating layout */}
+        <TestimonialSection />
 
         {/* Review Form */}
         <ReviewForm />
