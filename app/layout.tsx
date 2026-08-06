@@ -4,7 +4,7 @@ import './globals.css';
 import Script from 'next/script';
 import { Analytics } from '@vercel/analytics/react';
 import Link from 'next/link';
-import Header from './Header';
+import Header from './components/Header';
 
 const inter = Inter({ subsets: ['latin'] });
 
