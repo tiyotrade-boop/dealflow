@@ -10,6 +10,7 @@ import {
   orderBy,
   query,
   serverTimestamp,
+  updateDoc,
 } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
 
@@ -19,6 +20,7 @@ interface Testimonial {
   role: string;
   review: string;
   rating: number;
+  status: 'pending' | 'approved';
 }
 
 export default function AdminTestimonialsPage() {
@@ -29,6 +31,7 @@ export default function AdminTestimonialsPage() {
   const [rating, setRating] = useState(5);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
+  const [tab, setTab] = useState<'pending' | 'approved'>('pending');
 
   useEffect(() => {
     const q = query(collection(db, 'testimonials'), orderBy('createdAt', 'desc'));
@@ -53,6 +56,7 @@ export default function AdminTestimonialsPage() {
         role: role.trim(),
         review: review.trim(),
         rating,
+        status: 'approved',
         createdAt: serverTimestamp(),
       });
       setName('');
@@ -66,16 +70,20 @@ export default function AdminTestimonialsPage() {
     }
   };
 
+  const handleApprove = async (id: string) => {
+    await updateDoc(doc(db, 'testimonials', id), { status: 'approved' });
+  };
+
   const handleDelete = async (id: string) => {
     if (!confirm('Delete this testimonial?')) return;
     await deleteDoc(doc(db, 'testimonials', id));
   };
 
+  const filtered = testimonials.filter((t) => (t.status || 'approved') === tab);
+
   return (
     <div className="max-w-3xl mx-auto px-4 py-10">
-      <h1 className="text-2xl font-bold text-gray-900 mb-6">
-        Manage Testimonials
-      </h1>
+      <h1 className="text-2xl font-bold text-gray-900 mb-6">Manage Testimonials</h1>
 
       {/* Add form */}
       <div className="bg-white rounded-xl shadow p-6 mb-8 space-y-4">
@@ -108,9 +116,7 @@ export default function AdminTestimonialsPage() {
             onChange={(e) => setRating(Number(e.target.value))}
           >
             {[5, 4, 3, 2, 1].map((r) => (
-              <option key={r} value={r}>
-                {r} star{r !== 1 ? 's' : ''}
-              </option>
+              <option key={r} value={r}>{r} star{r !== 1 ? 's' : ''}</option>
             ))}
           </select>
         </div>
@@ -123,28 +129,57 @@ export default function AdminTestimonialsPage() {
         </button>
       </div>
 
+      {/* Tabs */}
+      <div className="flex gap-2 mb-4">
+        <button
+          onClick={() => setTab('pending')}
+          className={`px-4 py-2 rounded-lg text-sm font-medium transition ${
+            tab === 'pending'
+              ? 'bg-yellow-500 text-white'
+              : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+          }`}
+        >
+          Pending ({testimonials.filter((t) => (t.status || 'approved') === 'pending').length})
+        </button>
+        <button
+          onClick={() => setTab('approved')}
+          className={`px-4 py-2 rounded-lg text-sm font-medium transition ${
+            tab === 'approved'
+              ? 'bg-green-600 text-white'
+              : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+          }`}
+        >
+          Approved ({testimonials.filter((t) => (t.status || 'approved') === 'approved').length})
+        </button>
+      </div>
+
       {/* List */}
       <div className="space-y-4">
-        {testimonials.length === 0 && (
-          <p className="text-gray-500 text-sm">No testimonials yet.</p>
+        {filtered.length === 0 && (
+          <p className="text-gray-500 text-sm">No {tab} testimonials.</p>
         )}
-        {testimonials.map((t) => (
-          <div
-            key={t.id}
-            className="bg-white rounded-xl shadow p-4 flex justify-between items-start gap-4"
-          >
-            <div>
-              <p className="text-gray-700 text-sm mb-1">&ldquo;{t.review}&rdquo;</p>
-              <p className="font-semibold text-sm text-gray-900">{t.name}</p>
-              <p className="text-xs text-gray-500">{t.role}</p>
-              <p className="text-xs text-yellow-500">{'⭐'.repeat(t.rating)}</p>
+        {filtered.map((t) => (
+          <div key={t.id} className="bg-white rounded-xl shadow p-4">
+            <p className="text-gray-700 text-sm mb-1">&ldquo;{t.review}&rdquo;</p>
+            <p className="font-semibold text-sm text-gray-900">{t.name}</p>
+            <p className="text-xs text-gray-500">{t.role}</p>
+            <p className="text-xs text-yellow-500 mb-3">{'⭐'.repeat(t.rating)}</p>
+            <div className="flex gap-2">
+              {tab === 'pending' && (
+                <button
+                  onClick={() => handleApprove(t.id)}
+                  className="bg-green-600 text-white text-xs px-3 py-1 rounded-lg hover:bg-green-700 transition"
+                >
+                  ✓ Approve
+                </button>
+              )}
+              <button
+                onClick={() => handleDelete(t.id)}
+                className="text-red-500 text-xs border border-red-200 px-3 py-1 rounded-lg hover:bg-red-50 transition"
+              >
+                Delete
+              </button>
             </div>
-            <button
-              onClick={() => handleDelete(t.id)}
-              className="text-red-500 text-xs border border-red-200 px-3 py-1 rounded-lg hover:bg-red-50 transition shrink-0"
-            >
-              Delete
-            </button>
           </div>
         ))}
       </div>
