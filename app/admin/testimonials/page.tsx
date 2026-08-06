@@ -24,6 +24,8 @@ interface Testimonial {
 }
 
 export default function AdminTestimonialsPage() {
+  const [authed, setAuthed] = useState(false);
+  const [password, setPassword] = useState('');
   const [testimonials, setTestimonials] = useState<Testimonial[]>([]);
   const [name, setName] = useState('');
   const [role, setRole] = useState('');
@@ -34,6 +36,7 @@ export default function AdminTestimonialsPage() {
   const [tab, setTab] = useState<'pending' | 'approved'>('pending');
 
   useEffect(() => {
+    if (!authed) return;
     const q = query(collection(db, 'testimonials'), orderBy('createdAt', 'desc'));
     const unsub = onSnapshot(q, (snap) => {
       setTestimonials(
@@ -41,7 +44,15 @@ export default function AdminTestimonialsPage() {
       );
     });
     return () => unsub();
-  }, []);
+  }, [authed]);
+
+  const handleLogin = () => {
+    if (password === process.env.NEXT_PUBLIC_ADMIN_PASSWORD) {
+      setAuthed(true);
+    } else {
+      alert('Wrong password. Try again.');
+    }
+  };
 
   const handleAdd = async () => {
     if (!name.trim() || !review.trim()) {
@@ -81,9 +92,48 @@ export default function AdminTestimonialsPage() {
 
   const filtered = testimonials.filter((t) => (t.status || 'approved') === tab);
 
+  // Password gate
+  if (!authed) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
+        <div className="bg-white rounded-xl shadow-lg p-8 w-full max-w-sm space-y-4">
+          <div className="text-center mb-2">
+            <div className="w-12 h-12 bg-blue-600 rounded-xl flex items-center justify-center text-white font-bold text-lg mx-auto mb-3">
+              DA
+            </div>
+            <h2 className="text-xl font-bold text-gray-900">Admin Access</h2>
+            <p className="text-sm text-gray-500 mt-1">Enter your password to continue</p>
+          </div>
+          <input
+            type="password"
+            className="w-full border border-gray-300 rounded-lg px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            placeholder="Admin password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            onKeyDown={(e) => e.key === 'Enter' && handleLogin()}
+          />
+          <button
+            onClick={handleLogin}
+            className="w-full bg-blue-600 text-white py-3 rounded-lg text-sm font-semibold hover:bg-blue-700 transition"
+          >
+            Login
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="max-w-3xl mx-auto px-4 py-10">
-      <h1 className="text-2xl font-bold text-gray-900 mb-6">Manage Testimonials</h1>
+      <div className="flex items-center justify-between mb-6">
+        <h1 className="text-2xl font-bold text-gray-900">Manage Testimonials</h1>
+        <button
+          onClick={() => setAuthed(false)}
+          className="text-sm text-gray-500 hover:text-gray-700 border border-gray-200 px-3 py-1 rounded-lg"
+        >
+          Logout
+        </button>
+      </div>
 
       {/* Add form */}
       <div className="bg-white rounded-xl shadow p-6 mb-8 space-y-4">
