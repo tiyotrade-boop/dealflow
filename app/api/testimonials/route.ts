@@ -5,14 +5,12 @@ export async function GET() {
   try {
     const snap = await adminDb()
       .collection('testimonials')
-      .where('status', '==', 'approved')
       .orderBy('createdAt', 'desc')
       .get();
 
-    const testimonials = snap.docs.map((doc) => ({
-      id: doc.id,
-      ...doc.data(),
-    }));
+    const testimonials = snap.docs
+      .map((doc) => ({ id: doc.id, ...doc.data() }))
+      .filter((t: any) => t.status === 'approved');
 
     return NextResponse.json(testimonials);
   } catch (error) {
