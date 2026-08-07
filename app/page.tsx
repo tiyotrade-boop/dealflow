@@ -28,7 +28,7 @@ export default function Home() {
               href="/dashboard"
               className="bg-yellow-400 text-yellow-900 font-extrabold px-10 py-4 rounded-xl hover:bg-yellow-300 transition text-xl shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
             >
-              🚀 Start Free Trial — No Credit Card Needed
+               🚀 Start Your Free 7-Day Trial
             </Link>
             <Link
               href="/dashboard"
