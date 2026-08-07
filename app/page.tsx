@@ -8,29 +8,53 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-gray-50">
       <section className="max-w-5xl mx-auto px-4 py-12 text-center">
+
         {/* Hero */}
         <div className="bg-gradient-to-r from-blue-600 to-blue-800 text-white rounded-2xl p-12 mb-8 shadow-xl">
+          {/* Limited time offer banner */}
+          <div className="inline-block bg-yellow-400 text-yellow-900 text-xs font-bold px-4 py-1.5 rounded-full mb-6 animate-pulse">
+            🔥 LIMITED TIME — First 100 users get 50% off forever
+          </div>
+
           <h1 className="text-4xl md:text-5xl font-bold mb-4">
             ⚡ 5 Seconds to Know <br />If a Deal Is Worth It
           </h1>
-          <p className="text-xl md:text-2xl text-blue-100 mb-6">
+          <p className="text-xl md:text-2xl text-blue-100 mb-8">
             Stop wasting hours on spreadsheets. Get instant profit & ROI analysis.
           </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+
+          <div className="flex flex-col items-center gap-4">
             <Link
               href="/dashboard"
-              className="bg-white text-blue-700 font-semibold px-8 py-3 rounded-lg hover:bg-blue-50 transition text-lg"
+              className="bg-yellow-400 text-yellow-900 font-extrabold px-10 py-4 rounded-xl hover:bg-yellow-300 transition text-xl shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
             >
-              🚀 Try Free for 7 Days
+              🚀 Start Free Trial — No Credit Card Needed
             </Link>
             <Link
               href="/dashboard"
               className="bg-blue-700 text-white font-semibold px-8 py-3 rounded-lg hover:bg-blue-900 transition text-lg"
             >
-              See the Calculator
+              See the Calculator →
             </Link>
           </div>
-          <p className="text-blue-200 text-sm mt-4">✅ 7-day free trial · Cancel anytime</p>
+
+          <p className="text-blue-200 text-sm mt-6">✅ 7-day free trial · Cancel anytime · No charge until trial ends</p>
+
+          {/* Trust badges */}
+          <div className="flex flex-wrap justify-center gap-4 mt-6">
+            <div className="flex items-center gap-1.5 bg-blue-700 bg-opacity-50 px-3 py-1.5 rounded-lg text-xs text-blue-100">
+              🔒 Secure Payment
+            </div>
+            <div className="flex items-center gap-1.5 bg-blue-700 bg-opacity-50 px-3 py-1.5 rounded-lg text-xs text-blue-100">
+              💯 7-Day Money-Back Guarantee
+            </div>
+            <div className="flex items-center gap-1.5 bg-blue-700 bg-opacity-50 px-3 py-1.5 rounded-lg text-xs text-blue-100">
+              ❌ Cancel Anytime
+            </div>
+            <div className="flex items-center gap-1.5 bg-blue-700 bg-opacity-50 px-3 py-1.5 rounded-lg text-xs text-blue-100">
+              ⚡ Instant Access
+            </div>
+          </div>
         </div>
 
         {/* Calculator Preview */}
@@ -131,7 +155,7 @@ export default function Home() {
           </div>
         </div>
 
-        {/* Testimonials - alternating layout */}
+        {/* Testimonials */}
         <TestimonialSection />
 
         {/* Review Form */}
@@ -142,12 +166,18 @@ export default function Home() {
           <h2 className="text-2xl font-bold mb-4">Ready to Save Time & Close More Deals?</h2>
           <Link
             href="/dashboard"
-            className="bg-white text-blue-700 font-semibold px-8 py-3 rounded-lg hover:bg-blue-50 transition text-lg inline-block"
+            className="bg-yellow-400 text-yellow-900 font-extrabold px-10 py-4 rounded-xl hover:bg-yellow-300 transition text-xl shadow-lg inline-block"
           >
             🚀 Start Your Free 7-Day Trial
           </Link>
+          <div className="flex flex-wrap justify-center gap-4 mt-6">
+            <span className="text-blue-200 text-sm">🔒 Secure Payment</span>
+            <span className="text-blue-200 text-sm">💯 Money-Back Guarantee</span>
+            <span className="text-blue-200 text-sm">❌ Cancel Anytime</span>
+          </div>
           <p className="text-blue-200 text-sm mt-4">Free for 7 days, then $49/mo. Cancel anytime before your trial ends and you won&apos;t be charged.</p>
         </div>
+
       </section>
     </div>
   );
