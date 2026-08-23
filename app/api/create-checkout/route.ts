@@ -6,7 +6,7 @@
 // serverless bundling problems firebase-admin causes on Vercel.
 //
 // Required env vars:
-//   STRIPE_SECRET_KEY            = sk_test_... (or sk_live_...)
+//   STRIPE_SECRET_KEY            = sk_live_... (or sk_test_...)
 //   STRIPE_PRICE_ID             = price_...
 //   NEXT_PUBLIC_APP_URL         = https://dealanalytic.com
 //   NEXT_PUBLIC_FIREBASE_API_KEY = (your Firebase web API key — already set for the client)
@@ -61,7 +61,8 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Invalid session" }, { status: 401 });
     }
 
-    const priceId = process.env.STRIPE_PRICE_ID;
+    // ✅ FIXED: Try both variable names
+    const priceId = process.env.STRIPE_PRICE_ID || process.env.NEXT_PUBLIC_STRIPE_PRICE_ID;
     if (!priceId) {
       console.error("STRIPE_PRICE_ID is not set");
       return NextResponse.json(
