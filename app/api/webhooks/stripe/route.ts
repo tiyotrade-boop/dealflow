@@ -3,15 +3,15 @@ import Stripe from 'stripe';
 import { db } from '../../../lib/firebase';
 import { doc, setDoc } from 'firebase/firestore';
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: '2026-06-24.dahlia',
-});
-
 export async function POST(request: Request) {
   try {
+    const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
+      apiVersion: '2026-06-24.dahlia',
+    });
+
     const body = await request.text();
     const sig = request.headers.get('stripe-signature')!;
-    
+
     const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET!;
     let event: Stripe.Event;
 
@@ -27,16 +27,16 @@ export async function POST(request: Request) {
     if (event.type === 'checkout.session.completed') {
       const userId = session.client_reference_id;
       const customerId = session.customer as string;
-      
+
       console.log('✅ Checkout completed for user:', userId);
-      
+
       if (userId) {
         await setDoc(doc(db, 'users', userId), {
           stripeCustomerId: customerId,
           subscribed: true,
           subscribedAt: new Date().toISOString(),
         }, { merge: true });
-        
+
         console.log('✅ Subscription saved for user:', userId);
       }
     }
